@@ -1,8 +1,8 @@
-import { redirectPage } from "./page-layout.js?v=v2026-10-29T15284";
+import { redirectPage } from "./page-layout.js?v=v2026-10-29T16143";
 // js/core/auth.js
-import { icon } from "./icons.js?v=v2026-10-29T15284";
-import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-29T15284";
-import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-29T15284";
+import { icon } from "./icons.js?v=v2026-10-29T16143";
+import { sb, buildSiteUrl } from "./supabase.js?v=v2026-10-29T16143";
+import { t, withLangParam } from "../../translation/translation.js?v=v2026-10-29T16143";
 
 
 const GUEST_LOCAL_MARKER_KEY = "fam:guest:session_seen";
@@ -26,7 +26,8 @@ export function niceAuthError(e) {
       e?.error_description ||
       e?.description ||
       (typeof e === "string" ? e : "") ||
-      String(e || "")).trim();
+      // Obiekt bez komunikatu: ogólny tekst zamiast „[object Object]”.
+      (e && typeof e === "object" ? "" : String(e || ""))).trim();
 
   if (!msg) return t("auth.loginFailed");
 
@@ -147,7 +148,7 @@ function authApiError(status, code) {
   return err;
 }
 
-import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-29T15284";
+import { reservedUsernameReason } from "./reserved-usernames.js?v=v2026-10-29T16143";
 
 
 export function validateUsername(un, { allowEmpty = false } = {}) {

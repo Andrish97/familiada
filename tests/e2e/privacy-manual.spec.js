@@ -11,7 +11,18 @@ test.use({ needs: { standard: 1 } });
 // Na produkcji treść Wskazówek przychodzi gotowa z Workera i odnośniki da się
 // kliknąć, zanim manual.js je przechwyci (wtedy działają jak zwykłe linki, bez
 // from=). Testy zachowania JS czekają na gotowość strony.
-const manualReady = (page) => expect(page.locator("html")).toHaveAttribute("data-manual-ready", "true");
+const manualReady = async (page) => {
+  const t0 = Date.now();
+  try {
+    await expect(page.locator("html")).toHaveAttribute("data-manual-ready", "true", { timeout: 15000 });
+  } finally {
+    // [e2e-diag]: czas do gotowości i zasoby Wskazówek, które jeszcze się wczytywały.
+    const slow = await page.evaluate(() => performance.getEntriesByType("resource")
+      .filter((e) => e.duration > 1500 || !e.responseEnd)
+      .map((e) => `${new URL(e.name).pathname} ${Math.round(e.duration)}ms`).slice(0, 12)).catch(() => []);
+    console.log(`[e2e-diag] manual ready po ${Date.now() - t0} ms; wolne zasoby: ${slow.join(", ") || "brak"}`);
+  }
+};
 
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
@@ -373,6 +384,7 @@ test("manual: podzielony ekran tabletu — Wskazówki działają, nakładka blok
 test("manual: podgląd zrzutu — na komputerze cały obraz w oknie i przybliżanie myszą, na tablecie palcami", async ({ browser }) => {
   const open = async (page) => {
     await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6#s-6-1`, { waitUntil: "domcontentloaded" });
+    await manualReady(page);
     const shot = page.locator(".m-shot-zoom").first();
     await expect.poll(() => shot.locator("img").evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true);
     await shot.click();

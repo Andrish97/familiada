@@ -1,11 +1,11 @@
-import { sb } from "./supabase.js?v=v2026-10-29T15284";
-import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-29T15284";
-import { toast } from "./toast.js?v=v2026-10-29T15284";
-import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-29T15284";
-import { icon, iconText } from "./icons.js?v=v2026-10-29T15284";
-import { openDialog, closeDialog, setOverlayOpen } from "./modal-sheet.js?v=v2026-10-29T15284";
-import { attachListTools } from "./share-sections.js?v=v2026-10-29T15284";
-import { emptyState } from "./empty-state.js?v=v2026-10-29T15284";
+import { sb } from "./supabase.js?v=v2026-10-29T16143";
+import { getUiLang, t } from "../../translation/translation.js?v=v2026-10-29T16143";
+import { toast } from "./toast.js?v=v2026-10-29T16143";
+import { sendResourceCopyMail } from "./invite-mail.js?v=v2026-10-29T16143";
+import { icon, iconText } from "./icons.js?v=v2026-10-29T16143";
+import { openDialog, closeDialog, setOverlayOpen } from "./modal-sheet.js?v=v2026-10-29T16143";
+import { attachListTools } from "./share-sections.js?v=v2026-10-29T16143";
+import { emptyState } from "./empty-state.js?v=v2026-10-29T16143";
 
 
 const attempts = new Map();
@@ -154,7 +154,10 @@ export function bindResourceSend({ button, kind, getSource, onDone, onState }) {
           toast(t("resourceSend.sent", { count: ids.length }));
           await onDone?.();
         } catch (sendError) {
-          errorNode.textContent = t(`resourceSend.errors.${sendError.message}`) || t("resourceSend.errors.failed");
+          // t() zwraca sam klucz, gdy nie ma tekstu dla kodu (np. copy_failed) -- wtedy ogólny komunikat.
+          const errorKey = `resourceSend.errors.${sendError.message}`;
+          const errorText = t(errorKey);
+          errorNode.textContent = errorText && errorText !== errorKey ? errorText : t("resourceSend.errors.failed");
         } finally {
           submit.disabled = false;
           onState?.();

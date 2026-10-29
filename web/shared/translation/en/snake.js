@@ -7,7 +7,7 @@ const en = {
     progressAccount: ({ best, games }) => `Account record: ${best} · games: ${games}`,
     progressLocal: "Log in to save your record",
     login: "Log in",
-    accountLabel: "Account",
+    signedInAs: ({ name }) => `Signed in as ${name}`,
     home: "Familijna",
     rotateMessage: "Turn your phone sideways — the snake uses the whole Display.",
     board: {

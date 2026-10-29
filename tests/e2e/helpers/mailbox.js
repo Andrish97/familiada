@@ -10,11 +10,20 @@ function authHeaders(extra = {}) {
   return { "X-E2E-Token": generateE2EToken(secret), "X-E2E-Run": RUN_ID, ...extra };
 }
 
+// Zerwane połączenie (ECONNRESET) powtarzamy -- wszystkie wywołania skrzynki
+// są powtarzalne (odczyt, czyszczenie, zwolnienie blokady).
 async function api(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: authHeaders(options.headers),
-  });
+  let response;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      response = await fetch(`${API_BASE}${path}`, { ...options, headers: authHeaders(options.headers) });
+      break;
+    } catch (err) {
+      if (attempt >= 3) throw err;
+      console.log(`[e2e-diag] mailbox ${path.split("?")[0]} fetch failed (${err.cause?.code || err.message}), retry ${attempt}`);
+      await new Promise((r) => setTimeout(r, 1000 * attempt));
+    }
+  }
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(`E2E mailbox ${response.status}: ${JSON.stringify(data)}`);
   return data;
@@ -30,6 +39,17 @@ async function releaseMailCooldown(recipient, actionKey) {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ recipient, action_key: actionKey }),
   });
+}
+
+// Blokada wysyłki dla pary właściciel–odbiorca (base:share, poll:share), jak po
+// wcześniejszym udostępnieniu; jako zalogowany właściciel z `page`. -> [{ ok, next_allowed_at }]
+async function reservePairCooldown(page, actionKey, targetKey) {
+  const token = await page.evaluate(async () => (await window.__sbClient.auth.getSession()).data.session.access_token);
+  const data = await api("/mail-cooldowns/reserve-pair", {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ action_key: actionKey, target_key: targetKey }),
+  });
+  return data.rows;
 }
 
 async function resetMailProviderLimits() {
@@ -85,4 +105,4 @@ async function readMailDelivery({ recipient, after }) {
   return api(`/mail-delivery?recipient=${encodeURIComponent(recipient)}&after=${encodeURIComponent(after)}`);
 }
 
-module.exports = { releaseMailCooldown, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits };
+module.exports = { releaseMailCooldown, reservePairCooldown, readMailDelivery, clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits };

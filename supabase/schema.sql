@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nbJnxtqjYzMlWJRm7Lw7tGPljoZgRDMYdj7nKql9lOLs19rG3FwPxMsF6vObnv0
+\restrict eoKNv6FUo0JZcmdaLkgeCZK4qlc7tBbU7tCQbhFFeCb3DJWc3m7IIzm8hNv5DNC
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -11705,6 +11705,33 @@ $_$;
 
 
 --
+-- Name: guard_qb_names(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_qb_names"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $_$
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+  if tg_op = 'UPDATE' and new.name is not distinct from old.name then
+    return new;
+  end if;
+  if tg_table_name = 'qb_tags'
+     and (char_length(coalesce(new.name, '')) > 40 or coalesce(new.name, '') !~ '^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$') then
+    raise exception 'qb:invalid' using errcode = 'P0001';
+  end if;
+  if tg_table_name = 'qb_categories' and char_length(coalesce(new.name, '')) > 80 then
+    raise exception 'name_too_long' using errcode = '22001';
+  end if;
+  return new;
+end;
+$_$;
+
+
+--
 -- Name: guard_qb_question_text(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -12200,7 +12227,13 @@ begin
   IF v_username IS NOT NULL AND v_username <> '' AND NOT v_is_guest AND (
        v_username !~ '^[a-zA-Z0-9_.-]{3,20}$'
        OR lower(v_username) LIKE 'guest\_%'
-       OR public.reserved_username_reason(v_username) IS NOT NULL
+       OR (public.reserved_username_reason(v_username) IS NOT NULL
+           -- jak profiles_reserve_test_username (460): e2e.<role><NN> tylko
+           -- dla adresu tej tożsamości testowej
+           AND NOT (public.reserved_username_reason(v_username) = 'test' AND EXISTS (
+             SELECT 1 FROM public.e2e_identities i
+             WHERE i.name = lower(btrim(v_username)) AND i.role IN ('standard','disposable','dedicated')
+               AND lower(new.email) IN (i.email, replace(i.email,'@','.new@')))))
        OR EXISTS (SELECT 1 FROM public.profiles p WHERE lower(p.username) = lower(v_username) AND p.id <> new.id)) THEN
     v_username := NULL;
   END IF;
@@ -23601,6 +23634,20 @@ CREATE TRIGGER "a_guard_profile_client_write" BEFORE INSERT OR UPDATE ON "public
 
 
 --
+-- Name: qb_categories a_guard_qb_names; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_qb_names" BEFORE INSERT OR UPDATE OF "name" ON "public"."qb_categories" FOR EACH ROW EXECUTE FUNCTION "public"."guard_qb_names"();
+
+
+--
+-- Name: qb_tags a_guard_qb_names; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_qb_names" BEFORE INSERT OR UPDATE OF "name" ON "public"."qb_tags" FOR EACH ROW EXECUTE FUNCTION "public"."guard_qb_names"();
+
+
+--
 -- Name: qb_tags a_guard_qb_tag_color; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -27039,5 +27086,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nbJnxtqjYzMlWJRm7Lw7tGPljoZgRDMYdj7nKql9lOLs19rG3FwPxMsF6vObnv0
+\unrestrict eoKNv6FUo0JZcmdaLkgeCZK4qlc7tBbU7tCQbhFFeCb3DJWc3m7IIzm8hNv5DNC
 

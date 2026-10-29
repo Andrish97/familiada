@@ -2,6 +2,7 @@
 const en = {
   index: {
     backHome: "Home page",
+    backSnake: "Snake",
     intro: "To create games and run a live show, log in. No account? Register below.",
     title: "Familijna — login",
     statusChecking: "Checking session…",

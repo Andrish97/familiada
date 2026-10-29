@@ -2,6 +2,7 @@
 const pl = {
   index: {
     backHome: "Strona główna",
+    backSnake: "Wąż",
     intro: "Aby tworzyć gry i prowadzić rozgrywkę na żywo — zaloguj się. Nie masz konta? Zarejestruj się poniżej.",
     title: "Familijna — logowanie",
     statusChecking: "Sprawdzam sesję…",

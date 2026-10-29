@@ -181,6 +181,7 @@ const en = {
       errSubject: "Enter a subject.",
       attachments: "Attachments (optional, max 5 files, 5 MB each)",
       chooseFiles: "Choose files",
+      attachSkipped: "Skipped (more than 5 files or over 5 MB): {files}.",
     },
     "rateLimited": "You can submit one report per 24 hours."
   },

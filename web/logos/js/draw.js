@@ -15,17 +15,17 @@
 // Każda zakończona zmiana woła commit() -- jedno miejsce, które zapisuje
 // snapshot, oznacza „niezapisane zmiany” i odświeża podgląd.
 
-import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T15284";
-import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-29T15284";
-import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-29T15284";
-import { t } from "../../shared/translation/translation.js?v=v2026-10-29T15284";
-import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-29T15284";
-import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T15284";
-import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-29T15284";
-import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-29T15284";
-import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-29T15284";
-import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-29T15284";
-import { setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-29T15284";
+import { confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T16143";
+import { initUiSelect } from "../../shared/js/core/ui-select.js?v=v2026-10-29T16143";
+import { placeDropdown } from "../../shared/js/core/popover.js?v=v2026-10-29T16143";
+import { t } from "../../shared/translation/translation.js?v=v2026-10-29T16143";
+import { v as cacheBust } from "../../shared/js/core/cache-bust.js?v=v2026-10-29T16143";
+import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T16143";
+import { DOT_W, DOT_H, TYPE_PIX, PIX_FORMAT, packBits, unpackBits } from "./render.js?v=v2026-10-29T16143";
+import { WORLD_W, WORLD_H, sceneToBits } from "./draw/raster.js?v=v2026-10-29T16143";
+import { SHAPES, shapeById, buildShapePath, buildArrowPath } from "./draw/shapes.js?v=v2026-10-29T16143";
+import { legacySceneTypes, prepareFabric } from "../../shared/js/core/fabric-compat.js?v=v2026-10-29T16143";
+import { setVars } from "../../shared/js/core/ui-metrics.js?v=v2026-10-29T16143";
 
 
 const TOOL = { SELECT: "SELECT", PAN: "PAN", TEXT: "TEXT", BRUSH: "BRUSH", ERASER: "ERASER", SHAPES: "SHAPES" };
@@ -1150,7 +1150,9 @@ export function initDrawEditor(ctx) {
       const prop = baseTool === TOOL.ERASER ? "size" : "stroke";
       if (s?.[prop] == null) return;
       ev.preventDefault();
-      s[prop] = clamp(s[prop] + (k === "]" ? 1 : -1), 1, 50);
+      // ten sam zakres co pole grubości / gumki (poniżej 5 kropki znikają)
+      const [lo, hi] = baseTool === TOOL.ERASER ? RANGE.eraser : RANGE.stroke;
+      s[prop] = clamp(s[prop] + (k === "]" ? 1 : -1), lo, hi);
       if (baseTool === TOOL.BRUSH) applyBrushStyle();
       updateCursor();
       renderSettings();

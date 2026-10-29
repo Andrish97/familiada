@@ -1,6 +1,8 @@
 /* snake.css -- ukryta gra w węża na kopii planszy Wyświetlacza. */
 :root {
   --snake-accent-line: rgba(215,255,61,.55);   /* kolor motywu planszy: włączony przycisk */
+  /* Pas nad planszą na przyciski w rogach (44 px + odstępy) -- nie zasłaniają planszy. */
+  --snake-bar: 68px;
 }
 body.snake-body {
   margin: 0;
@@ -13,7 +15,7 @@ body.snake-body {
 .snake-wrap {
   min-height: 100dvh;
   box-sizing: border-box;
-  padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  padding: calc(max(12px, env(safe-area-inset-top)) + var(--snake-bar) - 12px) 16px max(16px, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -24,7 +26,7 @@ body.snake-body {
 /* Plansza 16:9 jak Wyświetlacz, jak największa przy miejscu na podpisy. */
 .snake-frame {
   position: relative;
-  width: min(100%, calc((100dvh - 150px) * 16 / 9));
+  width: min(100%, calc((100dvh - var(--snake-bar) - 110px) * 16 / 9));
   aspect-ratio: 1280 / 720;
   border-radius: var(--r-md);
   overflow: hidden;
@@ -55,15 +57,17 @@ body.snake-body {
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-left: env(safe-area-inset-left, 0px);
     height: 100dvh;
-    padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+    padding: calc(var(--safe-top) + var(--snake-bar)) var(--safe-right) var(--safe-bottom) var(--safe-left);
   }
   .snake-frame {
-    width: min(100%, calc((100dvh - var(--safe-top) - var(--safe-bottom)) * 16 / 9));
+    width: min(100%, calc((100dvh - var(--safe-top) - var(--safe-bottom) - var(--snake-bar)) * 16 / 9));
     border-radius: 0;
     overflow: visible;
   }
   .snake-frame .layer-bg { position: fixed; inset: 0; width: auto; height: auto; }
-  .snake-desktop { display: none; }
+  /* .snake-wrap: mocniej niż .snake-links { display: flex } niżej -- link pod
+     planszą spychał ją na dotyku w górę poza ekran. */
+  .snake-wrap .snake-desktop { display: none; }
 }
 
 .snake-note {
@@ -116,7 +120,31 @@ body.snake-body {
   text-align: right;
 }
 .snake-account-note:empty { display: none; }
-
+/* Zalogowany: nazwa konta (tylko informacja, nie przycisk) -- wysokość i ramka
+   jak przyciski w rogach. */
+.snake-who {
+  height: 44px;
+  max-width: min(calc(50vw - 150px), 320px);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--w-25);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  box-shadow: 0 4px 14px var(--k-40);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+.snake-who[hidden] { display: none; }
+.snake-who .ico { width: 20px; height: 20px; flex: 0 0 auto; }
+.snake-who-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.snake-who-name,
+.snake-who-progress { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.snake-who-progress { color: var(--text-soft); font-size: 11px; font-weight: 600; }
+.snake-who-progress:empty { display: none; }
 /* Zastępczy pełny ekran (przeglądarka bez Fullscreen API). */
 html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden; }
 

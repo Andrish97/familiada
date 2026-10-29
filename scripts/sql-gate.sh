@@ -27,8 +27,11 @@ grant select, insert, update, delete on all tables in schema public to authentic
 grant usage, select on all sequences in schema public to authenticated;
 grant select on all tables in schema public to anon;
 SQL
-for m in "$@"; do
-  [ -n "$m" ] || continue
+# schema.sql nie ma uprawnień (GRANT/REVOKE), więc powyżej wszystko jest
+# nadane; migracje od 514 (blokady nadużyć, powtarzalne) nakładane są zawsze,
+# żeby odebrane uprawnienia wróciły, potem nowe migracje z pusha.
+MIGS=$( { ls supabase/migrations/*.sql | awk -F/ '$NF >= "2026-10-29_514"'; printf '%s\n' "$@"; } | grep . | sort -u)
+for m in $MIGS; do
   echo "migracja: $m"
   P -f "$m" 2>&1 | grep -E "ERROR" | head -3 || true
 done

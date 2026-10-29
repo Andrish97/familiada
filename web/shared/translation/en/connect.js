@@ -45,6 +45,7 @@ const en = {
       resolving: "Checking code…",
       codeNotFound: "No device found for this code. Check the code.",
       tooManyAttempts: "Too many failed attempts. Try again in a few minutes.",
+      networkError: "Could not connect. Check your internet connection and try again.",
       previewGame: "Game:",
       previewOwner: "Owner:",
     },

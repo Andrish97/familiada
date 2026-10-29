@@ -1,7 +1,7 @@
 const { expectMailDocument } = require("./helpers/mail-document");
 const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { resetMailProviderLimits, extractHttpLinks, readMailDelivery } = require("./helpers/mailbox");
+const { resetMailProviderLimits, extractHttpLinks, readMailDelivery, reservePairCooldown } = require("./helpers/mailbox");
 
 test.use({ serviceWorkers: "block" });
 // E25: konta wypożyczane na worker (tests/README.md „Test accounts”): właściciel,
@@ -379,7 +379,7 @@ test("ankieta: mail-off daje zadanie mimo zegara, bez maila i przypomnienia", as
     const ownerId = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
     const target = `pair:${ownerId}:${user.id}:game:${gameId}`;
     await setFlag(true);
-    const reserved = await rpc(page, "mail_cooldown_reserve", { p_action_key: "poll:share", p_target_key: target });
+    const reserved = await reservePairCooldown(page, "poll:share", target);
     expect(reserved[0].ok).toBe(true);
     expect((await rpc(page, "poll_share_panel", { p_game_id: gameId })).friends.find(f => f.user_id === user.id).cooldown_until).toBeTruthy();
     await setFlag(false);

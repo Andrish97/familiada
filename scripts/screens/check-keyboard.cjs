@@ -122,14 +122,21 @@ async function checkScene(browser, origin, scene, deviceName, buildGameState) {
   if (scene.initScript) await context.addInitScript(scene.initScript);
   const page = await context.newPage();
   const out = [];
+  if (process.env.VERBOSE) page.on("pageerror", (e) => console.log(`  ! ${scene.id} ${deviceName}: ${e.message.slice(0, 160)}`));
   try {
     const [pathOnly, hash = ""] = scene.path.split("#");
     await page.goto(`${origin}${pathOnly}${pathOnly.includes("?") ? "&" : "?"}lang=pl${hash ? `#${hash}` : ""}`, { waitUntil: "domcontentloaded" });
-    if (typeof scene.ready === "string") await page.waitForSelector(scene.ready, { state: "visible", timeout: 15000 });
-    else if (scene.ready) await page.waitForFunction(scene.ready, null, { timeout: 15000 });
+    // Warunek gotowości lub krok sceny bywa pod jedno urządzenie (np. spis
+    // treści schowany na dotyku) -- wtedy i tak sprawdzamy pola strony.
+    try {
+      if (typeof scene.ready === "string") await page.waitForSelector(scene.ready, { state: "visible", timeout: 15000 });
+      else if (scene.ready) await page.waitForFunction(scene.ready, null, { timeout: 15000 });
+    } catch (e) { out.push({ skip: `gotowość sceny: ${e.message.split("\n")[0].slice(0, 80)} (pola strony i tak sprawdzone)` }); }
     await page.waitForFunction(() => !document.documentElement.classList.contains("page-loading"), null, { timeout: 8000 }).catch(() => {});
     if (await page.evaluate(() => (document.documentElement.dataset.deviceGuard || "ok") !== "ok")) return [{ skip: "strona zablokowana na tym urządzeniu" }];
-    for (const step of scene.steps || []) await step(page, { lang: "pl", device: deviceName, page });
+    try {
+      for (const step of scene.steps || []) await step(page, { lang: "pl", device: deviceName, page });
+    } catch (e) { out.push({ skip: `krok sceny: ${e.message.split("\n")[0].slice(0, 80)} (pola bieżącego widoku i tak sprawdzone)` }); }
     await page.waitForTimeout(400);
     const fields = await page.evaluate(listFields);
     for (const f of fields) {

@@ -1,7 +1,7 @@
 const { expectMailDocument } = require("./helpers/mail-document");
 const { test, expect } = require("./helpers/e2e-test");
 const { serveBranchCode } = require("./helpers/branch-code");
-const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, readMailDelivery } = require("./helpers/mailbox");
+const { clearMailbox, waitForEmail, extractHttpLinks, resetMailProviderLimits, readMailDelivery, reservePairCooldown } = require("./helpers/mailbox");
 const SITE = "https://www.familijna.app";
 const branch = process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH_CODE !== "0";
 test.use({ serviceWorkers: "block" });
@@ -253,7 +253,7 @@ test("bazy337: mail-off udostępnia mimo mailowego cooldownu, bez kolejki; odmow
     baseId = await createBase(page, `E2E-B339-MUTED-${Date.now()}`);
     const ownerId = await page.evaluate(async () => (await window.__sbClient.auth.getUser()).data.user.id);
     const key = `pair:${ownerId}:${recipientId}:base:${baseId}`;
-    const clock = await rpc(page, "mail_cooldown_reserve", { p_action_key: "base:share", p_target_key: key });
+    const clock = await reservePairCooldown(page, "base:share", key);
     const initialUntil = clock[0].next_allowed_at;
     await openShare(page, baseId);
     const checkbox = page.locator(`#baseShareFriends [data-id="${recipientId}"] input`);

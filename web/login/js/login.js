@@ -1,7 +1,7 @@
-import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T15284";
-import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-29T15284";
+import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T16143";
+import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-29T16143";
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T15284";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T16143";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -23,17 +23,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-29T15284";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T15284";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T15284";
+} from "../../shared/js/core/auth.js?v=v2026-10-29T16143";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T16143";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T16143";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T15284";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T15284";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T15284";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T15284";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T15284";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T15284";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-29T15284";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T16143";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T16143";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T16143";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T16143";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T16143";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T16143";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-29T16143";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -552,7 +552,8 @@ const nextFriend = params.get("f");
 const nextTab = params.get("tab");
 // Ukryta gra w węża: powrót tylko z ważnym linkiem z kodu QR (inaczej /snake/ = 404).
 const nextSnakeQr = params.get("qr");
-const NEXT_TARGETS = ["tasks", "friends", "bases"];
+// account: centrum maili („Masz konto w Familijnej”) prowadzi do Ustawień konta (powiadomienia).
+const NEXT_TARGETS = ["tasks", "friends", "bases", "account"];
 if (isScreenshotId(nextSnakeQr)) NEXT_TARGETS.push("snake");
 const hasNextTarget = NEXT_TARGETS.includes(nextTarget);
 const guestUsername = params.get("guest_username") === "1";
@@ -581,7 +582,7 @@ function buildNextUrl() {
     snake.searchParams.set("lang", getUiLang());
     return snake.toString();
   }
-  const url = new URL(nextTarget === "friends" ? "/friends/" : nextTarget === "bases" ? "/bases/" : "/tasks/", location.origin);
+  const url = new URL(nextTarget === "friends" ? "/friends/" : nextTarget === "bases" ? "/bases/" : nextTarget === "account" ? PAGES.account.path : "/tasks/", location.origin);
   if (nextTarget === "friends" && nextFriend) url.searchParams.set("f", nextFriend);
   if (nextTarget === "tasks" && nextTask) url.searchParams.set("t", nextTask);
   if (nextTarget === "bases" && nextBase) url.searchParams.set("b", nextBase);
@@ -845,6 +846,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const syncManual = () => btnManual?.setAttribute("href", manualHref("login"));
   syncManual();
   window.addEventListener("i18n:lang", syncManual);
+  // Logowanie z gry w węża: powrót do gry (ten sam kod QR), także po nieudanej próbie.
+  const btnBackHome = document.getElementById("btnBackHome");
+  if (btnBackHome && hasNextTarget && nextTarget === "snake") {
+    btnBackHome.dataset.i18n = "index.backSnake";
+    const syncBack = () => {
+      const u = new URL(buildNextUrl());
+      btnBackHome.setAttribute("href", `${u.pathname}${u.search}`);
+      btnBackHome.innerHTML = iconText("arrow-left", t("index.backSnake"));
+    };
+    syncBack();
+    window.addEventListener("i18n:lang", syncBack);
+  }
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   initPasswordToggles();

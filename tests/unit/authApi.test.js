@@ -204,3 +204,19 @@ test('Turnstile: formularz kontaktu i dopisanie do zgłoszenia wymagają tokenu'
     assert.equal(app.status, 400);
   } finally { globalThis.fetch = prev; }
 });
+
+test('auth/reset: limit KV na login i IP; podpisany przebieg e2e go nie zużywa', async () => {
+  const prev = globalThis.fetch;
+  try {
+    mockBackend();
+    const e = env();
+    const statuses = [];
+    for (let i = 0; i < 7; i++) statuses.push((await handleAuthReset(req('/_api/auth/reset', { login: 'alicja' }), e)).status);
+    assert.deepEqual(statuses.slice(0, 5), [200, 200, 200, 200, 200]);
+    assert.equal(statuses[5], 429, 'szósty reset w godzinie odrzucony');
+    for (let i = 0; i < 3; i++) {
+      const res = await handleAuthReset(req('/_api/auth/reset', { login: 'alicja' }, { headers: { 'X-E2E-Token': e2eToken('e2e-secret') } }), e);
+      assert.equal(res.status, 200, 'e2e bez limitu');
+    }
+  } finally { globalThis.fetch = prev; }
+});

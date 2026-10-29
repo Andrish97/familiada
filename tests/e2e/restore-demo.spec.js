@@ -14,6 +14,7 @@ test.use({ needs: { standard: 1 } });
 // /account jest celowo zablokowane dla gości (guest-mode.js showGuestBlockedOverlay,
 // account.js:453) — restore demo można przetestować tylko na koncie testowym.
 test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)", async ({ page, context, accounts, loginAs }) => {
+  test.setTimeout(15 * 60_000);
   await loginAs(page, context, accounts.standard[0]);
 
   const setup = await page.evaluate(async () => {
@@ -76,16 +77,19 @@ test("restore_my_demo czyści osierocone pliki po edytowanym demo (logo i gra)",
   await page.waitForURL(/games/, { timeout: 20000 });
 
   // Kluczowa asercja: oba pliki (audio starej demo-gry, obrazek starego
-  // demo-logo) mają zniknąć z bucketów, mimo że restore_my_demo sam w
-  // sobie ich nie kasuje (to czysty SQL) — musi to zrobić diff w account.js
-  const after = await page.evaluate(async ({ userId, gameId }) => {
+  // demo-logo) mają zniknąć z bucketów.
+  // Pliki usuniętych wierszy trafiają do storage_cleanup_queue (313) i znikają
+  // przy najbliższym przebiegu storage-cleanup (cron co 10 minut), nie od razu.
+  const listFiles = () => page.evaluate(async ({ userId, gameId }) => {
     const sb = window.__sbClient;
     const sounds = await sb.storage.from("user-sounds").list(`${userId}/${gameId}`);
     const logos = await sb.storage.from("user-logos").list(userId);
-    return { sounds: sounds.data, logos: logos.data };
+    return { sounds: sounds.data?.length ?? 0, logos: logos.data?.length ?? 0 };
   }, setup);
-  expect(after.sounds?.length ?? 0, "plik audio starej demo-gry powinien zniknąć po restore").toBe(0);
-  // Świeżo dosiane demo (seed_demo_for_user) nigdy nie ma plików w buckecie
-  // (payload trzymany inline w DB) — więc po restore user-logos ma być puste.
-  expect(after.logos?.length ?? 0, "user-logos powinno być puste po restore (stary plik skasowany, nowe demo nic nie wgrywa)").toBe(0);
+  // Świeżo dosiane demo (seed_demo_for_user) nie ma plików w buckecie (payload
+  // w bazie), więc po sprzątaniu oba katalogi są puste.
+  await expect.poll(listFiles, {
+    message: "pliki starej demo-gry i demo-logo powinny zniknąć po restore",
+    timeout: 12 * 60_000, intervals: [15_000, 30_000],
+  }).toEqual({ sounds: 0, logos: 0 });
 });

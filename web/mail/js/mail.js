@@ -1,11 +1,11 @@
-import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-29T15284';
-import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-29T15284';
-import { toast } from '../../shared/js/core/toast.js?v=v2026-10-29T15284';
-import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-29T15284';
-import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-29T15284';
-import { initSplitTabs } from '../../shared/js/core/split-tabs.js?v=v2026-10-29T15284';
-import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-29T15284';
-import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-29T15284";
+import { initI18n, t } from '../../shared/translation/translation.js?v=v2026-10-29T16143';
+import { icon, iconText, sharingActionIcon } from '../../shared/js/core/icons.js?v=v2026-10-29T16143';
+import { toast } from '../../shared/js/core/toast.js?v=v2026-10-29T16143';
+import { confirmModal } from '../../shared/js/core/modal.js?v=v2026-10-29T16143';
+import { tabFromUrl, setTab as setUrlTab } from '../../shared/js/core/tabs.js?v=v2026-10-29T16143';
+import { initSplitTabs } from '../../shared/js/core/split-tabs.js?v=v2026-10-29T16143';
+import { attachListTools } from '../../shared/js/core/share-sections.js?v=v2026-10-29T16143';
+import { initEntryPage } from "../../shared/js/core/page-init.js?v=v2026-10-29T16143";
 
 
 const $ = id => document.getElementById(id);
@@ -58,8 +58,10 @@ function actionIcon(name, label, act, href) {
   const node = document.createElement(href ? 'a' : 'button'); node.className = 'btn sm';
   node.title = text(label); node.setAttribute('aria-label', text(label)); node.innerHTML = icon(name);
   if (href) {
-    const link = new URL(href, location.origin);
-    if (link.origin !== location.origin || link.pathname !== '/go/') throw new Error('invalid_source_link');
+    let link = null;
+    try { link = new URL(href, location.origin); } catch {}
+    // Link spoza serwisu albo nie do /go/: wiersz bez odnośnika, reszta listy działa.
+    if (!link || link.origin !== location.origin || link.pathname !== '/go/') return null;
     node.href = link.pathname + link.search;
   } else { node.type = 'button'; node.addEventListener('click', () => perform(act)); }
   return node;
@@ -92,7 +94,8 @@ function row(item) {
     if (item.status === 'pending') actions.append(actionIcon('check', 'accept', () => sourceAction(item, 'accept')));
     actions.append(actionIcon(sharingActionIcon('withdraw'), item.status === 'active' ? 'withdraw' : 'decline', () => sourceAction(item, 'decline')));
   } else {
-    actions.append(actionIcon('arrow-right', item.kind === 'poll' ? 'vote' : 'connect', null, item.link));
+    const open = actionIcon('arrow-right', item.kind === 'poll' ? 'vote' : 'connect', null, item.link);
+    if (open) actions.append(open);
     if (item.kind === 'poll') actions.append(actionIcon(sharingActionIcon('decline'), 'decline', () => sourceAction(item, 'decline')));
   }
   node.append(kind, copy, actions); return node;

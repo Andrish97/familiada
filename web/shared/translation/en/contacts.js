@@ -48,7 +48,11 @@ const en = {
         "emailOnly": "This email has no Familijna account — you can add this person as a subscriber.",
         "cooldown": "You can send another invitation after: {date}.",
         "already": "This person is already on the list.",
-        "action": "The action failed."
+        "action": "The action failed.",
+        "self": "You can't invite yourself.",
+        "unknownUser": "There is no account with this username. Enter the full username or an email address.",
+        "invalidEmail": "Enter a valid email address.",
+        "notificationsDisabled": "This person has opted out of all Familijna messages — they can't be invited."
     },
     "mail": {
         "friendTitle": "{owner} invites you to be friends on Familijna",

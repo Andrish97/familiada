@@ -8,6 +8,7 @@ import { json } from "../core/http.js";
 import { supabaseRpc, normalizeRpcValue } from "../core/supabase.js";
 import { sha256Hex, clientIp, limitReached, countAttempt, claimSlots } from "../core/rate-limit.js";
 import { verifyTurnstile, CAPTCHA_STATUS } from "./turnstile.js";
+import { authorizeE2EApi } from "../e2e/e2e-api.js";
 
 const SITE_ORIGIN = "https://www.familijna.app";
 const LANGS = ["pl", "en", "uk"];
@@ -166,7 +167,10 @@ export async function handleAuthReset(request, env) {
   const refused = await captchaRefusal(request, env, body);
   if (refused) return refused;
 
-  const allowed = await claimSlots(env, [
+  // Przebiegi e2e (podpisany X-E2E-Token) wielokrotnie resetują te same konta
+  // jednorazowe -- limit KV ich nie dotyczy (sprawdza go unit authApi); cooldown
+  // w bazie zostaje.
+  const allowed = await authorizeE2EApi(request, env) || await claimSlots(env, [
     { key: `auth_reset_ip:${await sha256Hex(clientIp(request))}`, max: RESET_MAX_PER_IP, windowS: RESET_WINDOW_S },
     { key: `auth_reset_id:${await sha256Hex(login.toLowerCase())}`, max: RESET_MAX_PER_LOGIN, windowS: RESET_WINDOW_S },
   ]);

@@ -31,9 +31,18 @@ const client = {
   async lease({ worker, needs, label, ttl = 1200 }) {
     const password = process.env.TEST_PASSWORD;
     if (!password) throw new Error("Brak TEST_PASSWORD");
-    const { status, data } = await post("/lease", { run_id: RUN_ID, worker, needs, label, ttl, password });
-    if (status === 200 || status === 409) return data;
-    throw new Error(`lease ${status}: ${JSON.stringify(data)}`);
+    for (let attempt = 1; ; attempt++) {
+      const { status, data } = await post("/lease", { run_id: RUN_ID, worker, needs, label, ttl, password });
+      if (status === 200 || status === 409) return data;
+      // Dwa równoległe wypożyczenia wybrały to samo konto: baza wycofała całe
+      // drugie wywołanie (e2e_leases_pkey), więc ponowienie jest bezpieczne.
+      if (attempt < 3 && /e2e_leases_pkey/.test(data?.details || "")) {
+        console.log(`[e2e-lease] jednoczesne wypożyczenie tego samego konta, ponawiam (${attempt})`);
+        await new Promise((r) => setTimeout(r, 500 + Math.random() * 1500));
+        continue;
+      }
+      throw new Error(`lease ${status}: ${JSON.stringify(data)}`);
+    }
   },
   async renew(ttl = 1200) {
     return (await post("/lease/renew", { run_id: RUN_ID, ttl })).data;

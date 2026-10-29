@@ -1,18 +1,18 @@
 // Znajomi i subskrybenci: wspólne listy, akcje, zaproszenia i odświeżanie.
-import { sb } from "./supabase.js?v=v2026-10-29T15284";
-import { initPage } from "./page-init.js?v=v2026-10-29T15284";
-import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-29T15284";
-import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-29T15284";
-import { initSplitTabs } from "./split-tabs.js?v=v2026-10-29T15284";
-import { toast } from "./toast.js?v=v2026-10-29T15284";
-import { iconText } from "./icons.js?v=v2026-10-29T15284";
-import { confirmModal, alertModal } from "./modal.js?v=v2026-10-29T15284";
-import { shareSectionEl } from "./share-sections.js?v=v2026-10-29T15284";
-import { createCooldownTicker } from "./cooldown.js?v=v2026-10-29T15284";
-import { sendInviteMail } from "./invite-mail.js?v=v2026-10-29T15284";
-import { goLinkToken } from "./notify-mail.js?v=v2026-10-29T15284";
-import { initI18n, t } from "../../translation/translation.js?v=v2026-10-29T15284";
-import "./contact-modal.js?v=v2026-10-29T15284";
+import { sb } from "./supabase.js?v=v2026-10-29T16143";
+import { initPage } from "./page-init.js?v=v2026-10-29T16143";
+import { linkTo, PAGES } from "./nav-map.js?v=v2026-10-29T16143";
+import { tabFromUrl, setTab } from "./tabs.js?v=v2026-10-29T16143";
+import { initSplitTabs } from "./split-tabs.js?v=v2026-10-29T16143";
+import { toast } from "./toast.js?v=v2026-10-29T16143";
+import { iconText } from "./icons.js?v=v2026-10-29T16143";
+import { confirmModal, alertModal } from "./modal.js?v=v2026-10-29T16143";
+import { shareSectionEl } from "./share-sections.js?v=v2026-10-29T16143";
+import { createCooldownTicker } from "./cooldown.js?v=v2026-10-29T16143";
+import { sendInviteMail } from "./invite-mail.js?v=v2026-10-29T16143";
+import { goLinkToken } from "./notify-mail.js?v=v2026-10-29T16143";
+import { initI18n, t } from "../../translation/translation.js?v=v2026-10-29T16143";
+import "./contact-modal.js?v=v2026-10-29T16143";
 
 
 export async function initContactsPage(pageId) {
@@ -62,8 +62,13 @@ export async function initContactsPage(pageId) {
         focusRow(result.id);
         return;
       }
+      // Odmowy z serwera, które użytkownik może poprawić sam (siebie, zła nazwa,
+      // zły adres, adres wypisany ze wszystkich wiadomości).
+      const known = { self: "self", unknown_user: "unknownUser", invalid_email: "invalidEmail", notifications_disabled: "notificationsDisabled" };
       toast(result?.err === "cooldown" ? t("contacts.errors.cooldown", { date: new Date(result.cooldown_until).toLocaleString() })
-        : result?.err === "already" ? t("contacts.errors.already") : t("contacts.errors.action"), { kind: "error" });
+        : result?.err === "already" ? t("contacts.errors.already")
+        : Object.hasOwn(known, result?.err || "") ? t(`contacts.errors.${known[result.err]}`)
+        : t("contacts.errors.action"), { kind: "error" });
       console.warn("[contacts] action:", error);
     }
   }

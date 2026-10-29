@@ -131,7 +131,7 @@ Na dole każdej strony jest przycisk [Kontakt]. W oknie „Napisz do nas”:
 - „Temat” i „Wiadomość” — opisz problem,
 - „Numer zgłoszenia (opcjonalnie)” — jeśli piszesz w sprawie wcześniejszego zgłoszenia,
   wiadomość zostanie do niego dołączona,
-- „Załączniki” — do 5 plików po 5 MB, np. zrzuty ekranu.
+- „Załączniki” — do 5 plików po 5 MB, np. zrzuty ekranu; pliki ponad limit okno wymienia jako pominięte i ich nie wysyła.
 
 Po wysłaniu dostaniesz numer zgłoszenia. Aby szybciej rozwiązać problem, napisz:
 
