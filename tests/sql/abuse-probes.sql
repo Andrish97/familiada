@@ -20,6 +20,10 @@ create function pg_temp.as_anon() returns void language plpgsql as $$ begin
   perform set_config('request.jwt.claim.sub', '', true);
   perform set_config('role', 'anon', true);
 end $$;
+create function pg_temp.as_service() returns void language plpgsql as $f$ begin
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('role', 'service_role', true);
+end $f$;
 create function pg_temp.as_admin() returns void language plpgsql as $$ begin
   perform set_config('role', 'none', true);
   perform set_config('request.jwt.claim.sub', '', true);
@@ -257,6 +261,35 @@ do $$ declare r jsonb; begin begin
   perform pg_temp.done('P1 get_poll_game bez klucza', r::text like '%SEKRET_A%');
 exception when others then perform pg_temp.record(sqlerrm, 'P1 get_poll_game bez klucza', sqlstate); end; end $$;
 
+-- P2a: anonim zgaduje kody bez limitu (z przeglądarki, z pominięciem Workera).
+do $$ declare r jsonb; begin begin
+  perform pg_temp.as_anon();
+  r := public.resolve_device_connect_code('424242');
+  perform pg_temp.done('P2a anonim rozwiązuje kod bez Workera', (r->>'ok')::boolean is true);
+exception when others then perform pg_temp.record(sqlerrm, 'P2a anonim rozwiązuje kod bez Workera', sqlstate); end; end $$;
+-- P2b: kod po zakończeniu sesji Control oddaje martwy klucz (zamiast „brak kodu”).
+do $$ declare r jsonb; c text; begin begin
+  insert into public.control_device_link_tokens(session_id, game_id, device_type, token) values
+    ('ab000000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-000000000005', 'buzzer', 'ad000000-0000-4000-8000-000000000002');
+  perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
+  c := public.generate_device_connect_code('a1000000-0000-4000-8000-000000000005', 'buzzer', 'ad000000-0000-4000-8000-000000000002', 'gra', null)->>'code';
+  perform pg_temp.as_admin();
+  update public.control_runtime_sessions set ended_at = now() where id = 'ab000000-0000-4000-8000-000000000001';
+  perform pg_temp.as_service();
+  r := public.resolve_device_connect_code(c);
+  perform pg_temp.done('P2b kod po końcu sesji Control', (r->>'ok')::boolean is true);
+exception when others then perform pg_temp.record(sqlerrm, 'P2b kod po końcu sesji Control', sqlstate); end; end $$;
+-- P2c: kod ankiety po jej zamknięciu.
+do $$ declare r jsonb; c text; begin begin
+  perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
+  c := public.generate_device_connect_code('a1000000-0000-4000-8000-000000000002', 'poll_qr', 'probekeyA', 'gra', null)->>'code';
+  perform pg_temp.as_admin();
+  update public.games set share_key_poll = 'innyklucz' where id = 'a1000000-0000-4000-8000-000000000002';
+  perform pg_temp.as_service();
+  r := public.resolve_device_connect_code(c);
+  perform pg_temp.done('P2c kod ankiety po zmianie klucza', (r->>'ok')::boolean is true);
+exception when others then perform pg_temp.record(sqlerrm, 'P2c kod ankiety po zmianie klucza', sqlstate); end; end $$;
+
 -- P3: kod urządzenia dla cudzej gry z podstawioną nazwą i kluczem.
 do $$ declare r jsonb; begin begin
   perform pg_temp.as_user('b0000000-0000-4000-8000-00000000000b');
@@ -413,16 +446,29 @@ exception when others then
   if sqlstate = 'P9999' then perform pg_temp.record(sqlerrm, 'L19', sqlstate);
   else perform pg_temp.as_admin(); insert into probe values ('L19 rejestracja: wolna nazwa z adresu', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
 end; end $$;
--- TV: kod podany przez Control rozwiązuje się bez logowania.
+-- TV: kod podany przez Control rozwiązuje Worker (service_role) -- klucz otwartej ankiety.
 do $$ declare r jsonb; c text; begin begin
   perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
   c := public.generate_device_connect_code('a1000000-0000-4000-8000-000000000002', 'poll_qr', 'probekeyA', 'gra', null)->>'code';
-  perform pg_temp.as_anon();
+  perform pg_temp.as_service();
   r := public.resolve_device_connect_code(c);
-  perform pg_temp.done('L11 TV: kod -> klucz ankiety (anonim)', r->>'share_key' is distinct from 'probekeyA');
+  perform pg_temp.done('L11 TV: kod -> klucz ankiety (Worker)', r->>'share_key' is distinct from 'probekeyA');
 exception when others then
   if sqlstate = 'P9999' then perform pg_temp.record(sqlerrm, 'L11', sqlstate);
-  else perform pg_temp.as_admin(); insert into probe values ('L11 TV: kod -> klucz ankiety (anonim)', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
+  else perform pg_temp.as_admin(); insert into probe values ('L11 TV: kod -> klucz ankiety (Worker)', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
+end; end $$;
+-- TV: kod Wyświetlacza trwającej sesji Control działa.
+do $$ declare r jsonb; c text; begin begin
+  insert into public.control_device_link_tokens(session_id, game_id, device_type, token) values
+    ('ab000000-0000-4000-8000-000000000001', 'a1000000-0000-4000-8000-000000000005', 'display', 'ad000000-0000-4000-8000-000000000001');
+  perform pg_temp.as_user('a0000000-0000-4000-8000-00000000000a');
+  c := public.generate_device_connect_code('a1000000-0000-4000-8000-000000000005', 'display', 'ad000000-0000-4000-8000-000000000001', 'gra', null)->>'code';
+  perform pg_temp.as_service();
+  r := public.resolve_device_connect_code(c);
+  perform pg_temp.done('L11b TV: kod Wyświetlacza trwającej sesji (Worker)', (r->>'ok')::boolean is not true);
+exception when others then
+  if sqlstate = 'P9999' then perform pg_temp.record(sqlerrm, 'L11b', sqlstate);
+  else perform pg_temp.as_admin(); insert into probe values ('L11b TV: kod Wyświetlacza trwającej sesji (Worker)', true, 'BLOKADA: ' || left(sqlerrm, 100)); end if;
 end; end $$;
 
 select code as sonda, case when leak then 'LUKA' else 'ok' end as wynik, note as uwagi from probe order by code;

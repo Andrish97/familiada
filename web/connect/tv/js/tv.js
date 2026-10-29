@@ -1,4 +1,4 @@
-import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-29T14180";
+import { resolveDeviceCode } from "../../../shared/js/core/device-code.js?v=v2026-10-29T14180";
 import { initI18n, t, getUiLang } from "../../../shared/translation/translation.js?v=v2026-10-29T14180";
 import { getDeviceProfile, TV_HD_RESOLUTION } from "../../../shared/js/core/device-guard.js?v=v2026-10-29T14180";
 import { showPageGuard } from "../../../shared/js/core/page-overlay.js?v=v2026-10-29T14180";
@@ -74,8 +74,8 @@ form.addEventListener("submit", async (event) => {
   button.disabled = true;
   setMessage("checking");
   try {
-    const { data, error } = await sb().rpc("resolve_device_connect_code", { p_code: code });
-    if (error || !data?.ok) { setMessage("invalidCode"); return; }
+    const data = await resolveDeviceCode(code);
+    if (!data?.ok) { setMessage(data?.err === "rate_limited" ? "tooManyAttempts" : "invalidCode"); return; }
     if (!["display", "poll_qr"].includes(data.device_type)) { setMessage("wrongDevice"); return; }
     if (!data.game_id || !data.share_key) throw new Error("missing display credentials");
     const target = new URL("/go/", location.origin);

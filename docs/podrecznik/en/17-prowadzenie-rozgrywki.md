@@ -34,6 +34,8 @@ The **Display** is always needed — you cannot continue without it.
   and the button, OK/Enter confirms. You can also use the regular [Connect device] page.
   You do not need to sign in on the TV.
 - **Another device.** Open familijna.app → [Connect device] → [Connect by code] and enter the code.
+  The code works while the game session lasts (also up to an hour after the panel is closed);
+  after too many wrong codes from one network the page asks you to wait a few minutes.
 
 ![The TV page — the Display code](zrzut:play-connect-tv)
 

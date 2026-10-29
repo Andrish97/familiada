@@ -766,3 +766,62 @@ CREATE POLICY "Users can update their own rating" ON public.app_ratings FOR UPDA
 -- P3: dotychczasowe kody bez ważności wygasają za dobę (nowe są odświeżane
 -- przy każdym pokazaniu kodu w Control i w oknie QR ankiety).
 UPDATE public.device_connect_codes SET expires_at = now() + interval '24 hours' WHERE expires_at IS NULL;
+
+-- ----------------------------------------------------------------------
+-- P2 (decyzja użytkownika 2026-10-29): kod urządzenia działa tak długo jak
+-- klucz, na który wskazuje -- sesja Control (do godziny po zamknięciu karty,
+-- control_device_key_valid) albo otwarta/zatrzymana ankieta (klucz ankiety).
+-- Rozwiązuje go tylko Worker (/_api/device/resolve, limit nieudanych prób
+-- na IP i łącznie); z przeglądarki funkcja niedostępna.
+CREATE OR REPLACE FUNCTION public.resolve_device_connect_code(p_code text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_rec record;
+  v_live boolean;
+BEGIN
+  DELETE FROM public.device_connect_codes
+  WHERE expires_at IS NOT NULL AND expires_at < now();
+
+  IF coalesce(p_code, '') !~ '^[0-9]{6}$' THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+
+  SELECT dcc.*, p.username AS owner_username
+  INTO v_rec
+  FROM public.device_connect_codes dcc
+  JOIN public.profiles p ON p.id = dcc.owner_id
+  WHERE dcc.code = p_code;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+
+  IF v_rec.device_type = 'poll_qr' THEN
+    v_live := EXISTS (SELECT 1 FROM public.games g
+                      WHERE g.id = v_rec.game_id AND g.owner_id = v_rec.owner_id
+                        AND g.status IN ('poll_open', 'poll_stopped') AND g.share_key_poll = v_rec.share_key);
+  ELSE
+    v_live := public.control_device_key_valid(v_rec.game_id, v_rec.device_type, v_rec.share_key);
+  END IF;
+  IF NOT v_live THEN
+    DELETE FROM public.device_connect_codes WHERE id = v_rec.id;
+    RETURN jsonb_build_object('ok', false, 'err', 'not_found');
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok',             true,
+    'code',           v_rec.code,
+    'device_type',    v_rec.device_type,
+    'game_id',        v_rec.game_id,
+    'game_name',      v_rec.game_name,
+    'share_key',      v_rec.share_key,
+    'owner_username', v_rec.owner_username
+  );
+END;
+$function$;
+REVOKE EXECUTE ON FUNCTION public.resolve_device_connect_code(text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.resolve_device_connect_code(text) TO service_role;

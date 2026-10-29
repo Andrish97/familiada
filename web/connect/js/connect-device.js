@@ -12,6 +12,7 @@ import { icon } from "../../shared/js/core/icons.js?v=v2026-10-29T14180";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-29T14180";
 import { emptyStateHtml } from "../../shared/js/core/empty-state.js?v=v2026-10-29T14180";
 import { attachListTools } from "../../shared/js/core/share-sections.js?v=v2026-10-29T14180";
+import { resolveDeviceCode } from "../../shared/js/core/device-code.js?v=v2026-10-29T14180";
 
 
 const btnManual           = document.getElementById("btnManual");
@@ -83,9 +84,9 @@ async function handleCodeConnect() {
   if (btnConnectCode) btnConnectCode.disabled = true;
 
   try {
-    const { data, error } = await sb().rpc("resolve_device_connect_code", { p_code: raw });
-    if (error || !data?.ok) {
-      setCodeMsg(t("connectDevice.enterCode.codeNotFound"));
+    const data = await resolveDeviceCode(raw);
+    if (!data?.ok) {
+      setCodeMsg(t(data?.err === "rate_limited" ? "connectDevice.enterCode.tooManyAttempts" : "connectDevice.enterCode.codeNotFound"));
       return;
     }
     setCodeMsg("");
