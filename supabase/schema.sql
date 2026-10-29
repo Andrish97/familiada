@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict p8KTMHIIxNqXSOd08ppDXaacHjZTfYaTTvJ1db2gS04mgNsygZaVKa14nzCVq2H
+\restrict fx7niYAgYdI8fPAHVxcLQW7vwJn2c55xCbvQlOGoLcajVg4dJZs5RvYljN9JBa2
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -438,18 +438,25 @@ CREATE FUNCTION "public"."_control2_device_event_view"("p_device_type" "text", "
       WHEN p_event_type = 'lease_state' AND d->>'to_state' = 'released' THEN 'Urządzenie zwolniło blokadę.'
       WHEN p_event_type = 'lease_state' AND d->>'to_state' = 'expired' THEN 'Blokada urządzenia wygasła.'
       WHEN p_event_type = 'lease_state' AND d->>'to_state' = 'revoked' THEN 'Połączenie urządzenia zostało cofnięte.'
-      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'recovered' THEN 'Zakończyła się przerwa w bezpośrednim kanale urządzenia.'
-      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'auth_error' THEN 'Nie udało się uruchomić bezpośredniego kanału urządzenia.'
-      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'fallback_catchup' THEN 'Odczyt awaryjny nadrobił zmianę stanu gry.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'recovered' THEN 'Zakończyła się przerwa w kanale urządzenia; stan pobrany z bazy.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'auth_error' THEN 'Nie udało się pobrać tokenu kanału urządzenia.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'token_refresh' THEN 'Planowa wymiana tokenu kanału urządzenia.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'connected' THEN 'Kanał urządzenia połączony.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'socket_closed' THEN 'Zamknięte połączenie Realtime urządzenia.'
+      WHEN p_event_type = 'transport_state' AND d->>'phase' = 'reconnect_scheduled' THEN 'Ponowne dołączanie urządzenia do kanału.'
+      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'resync_applied' THEN 'Urządzenie nadrobiło zmiany z przerwy odczytem z bazy.'
+      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_slow' THEN 'Urządzenie wolno zastosowało nowy stan.'
+      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'fallback_catchup' THEN 'Odczyt awaryjny nadrobił zmianę stanu gry (dawny mechanizm).'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'read_error' THEN 'Odczyt stanu gry z bazy nie powiódł się.'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'read_recovered' THEN 'Odczyt stanu gry z bazy wrócił.'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_error' THEN 'Urządzenie odebrało stan gry, ale jego obsługa renderu zgłosiła błąd.'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_recovered' THEN 'Renderowanie stanu gry wróciło do działania.'
-      WHEN p_event_type = 'transport_state' THEN 'Zmienił się stan bezpośredniego kanału urządzenia.'
+      WHEN p_event_type = 'transport_state' THEN 'Zmienił się stan kanału urządzenia.'
       WHEN p_event_type = 'state_sync' THEN 'Urządzenie zsynchronizowało stan gry.'
       ELSE 'Zdarzenie urządzenia.' END,
     'metrics', d || jsonb_build_object('reason', p_event_type, 'impact', CASE
       WHEN p_event_type = 'transport_state' AND coalesce((d->>'catchup_count')::integer, 0) > 0 THEN 'fallback_catchup'
+      WHEN p_event_type = 'state_sync' AND d->>'phase' = 'resync_applied' THEN 'resync'
       WHEN p_event_type = 'transport_state' THEN 'transport_recovered'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_error' THEN 'render_failure'
       WHEN p_event_type = 'state_sync' AND d->>'phase' = 'render_recovered' THEN 'render_recovered'
@@ -26785,5 +26792,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict p8KTMHIIxNqXSOd08ppDXaacHjZTfYaTTvJ1db2gS04mgNsygZaVKa14nzCVq2H
+\unrestrict fx7niYAgYdI8fPAHVxcLQW7vwJn2c55xCbvQlOGoLcajVg4dJZs5RvYljN9JBa2
 
