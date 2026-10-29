@@ -30,12 +30,12 @@
 <body class="snake-body">
   <!-- Pełny ekran jak na Wyświetlaczu; na iPhonie w Safari (bez Fullscreen API)
        okno z instrukcją „Do ekranu początkowego” -- jak w Przycisku do pojedynku. -->
-  <!-- Konto: krótki komunikat i przycisk logowania (bez konta) albo konta,
-       obok pełnego ekranu -- widoczne także na telefonie. -->
+  <!-- Konto: krótki komunikat i przycisk logowania (bez konta) albo nazwa
+       zalogowanego konta, obok pełnego ekranu -- widoczne także na telefonie. -->
   <div class="snake-account" id="snakeAccountBar">
     <span class="snake-account-note" id="snakeProgress"></span>
     <a class="corner-btn" id="snakeLogin" href="/login/" hidden title="Zaloguj się" aria-label="Zaloguj się" data-i18n-title="snake.login" data-i18n-aria-label="snake.login"><i class="ico" data-icon="person"></i></a>
-    <a class="corner-btn" id="snakeAccount" href="/account/" hidden title="Konto" aria-label="Konto" data-i18n-title="snake.accountLabel" data-i18n-aria-label="snake.accountLabel"><i class="ico" data-icon="person"></i></a>
+    <div class="snake-who" id="snakeAccount" hidden><i class="ico" data-icon="person" aria-hidden="true"></i><span class="snake-who-text"><span class="snake-who-name" id="snakeAccountName"></span><span class="snake-who-progress" id="snakeAccountProgress"></span></span></div>
   </div>
   <button class="corner-btn fs-btn" id="btnFullscreen" type="button" title="Pełny ekran" aria-label="Pełny ekran" data-i18n-title="common.fullscreen" data-i18n-aria-label="common.fullscreen"><i class="ico" data-icon="fullscreen-enter"></i></button>
   <div class="a2hs" id="snakeA2HS" role="dialog" aria-modal="true" aria-labelledby="snakeA2HSTitle" aria-hidden="true">

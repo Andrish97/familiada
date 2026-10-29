@@ -845,6 +845,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const syncManual = () => btnManual?.setAttribute("href", manualHref("login"));
   syncManual();
   window.addEventListener("i18n:lang", syncManual);
+  // Logowanie z gry w węża: powrót do gry (ten sam kod QR), także po nieudanej próbie.
+  const btnBackHome = document.getElementById("btnBackHome");
+  if (btnBackHome && hasNextTarget && nextTarget === "snake") {
+    btnBackHome.dataset.i18n = "index.backSnake";
+    const syncBack = () => {
+      const u = new URL(buildNextUrl());
+      btnBackHome.setAttribute("href", `${u.pathname}${u.search}`);
+      btnBackHome.innerHTML = iconText("arrow-left", t("index.backSnake"));
+    };
+    syncBack();
+    window.addEventListener("i18n:lang", syncBack);
+  }
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   initPasswordToggles();

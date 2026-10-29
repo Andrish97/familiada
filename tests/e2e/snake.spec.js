@@ -12,7 +12,7 @@ const branch = process.env.GITHUB_REF_NAME !== "main" && process.env.TEST_BRANCH
 test.use({ serviceWorkers: "block", needs: { standard: 1 } });
 
 test.beforeEach(async ({ context }) => {
-  if (branch) await serveBranchCode(context, { pages: ["snake", "go"] });
+  if (branch) await serveBranchCode(context, { pages: ["snake", "go", "login"] });
   await context.addInitScript((id) => {
     try { if (!localStorage.getItem("familijna:snake:visitor")) localStorage.setItem("familijna:snake:visitor", id); } catch {}
   }, `e2e-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`);
@@ -116,19 +116,27 @@ test("wąż: „Zaloguj się” wraca do gry, zalogowany ma zapisany rekord i li
   // Adres linku uzupełnia skrypt gry po starcie (w HTML jest goły /login/).
   await expect(page.locator("#snakeLogin")).toHaveAttribute("href", /next=snake&qr=00000000-0000-4000-8000-000000000103/, { timeout: 30_000 });
   const loginHref = await page.locator("#snakeLogin").getAttribute("href");
+  // Strona logowania otwarta z gry: powrót prowadzi do węża (ten sam kod QR), nie na stronę główną.
+  await page.goto(`${SITE}${loginHref}`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#btnBackHome")).toHaveText(/Wąż/);
+  await expect(page.locator("#btnBackHome")).toHaveAttribute("href", /^\/snake\/\?qr=00000000-0000-4000-8000-000000000103/);
   // Logowanie z linku w grze -- po zalogowaniu powrót do węża (mapa: wyjątek next=snake).
   // Zdarzenia liczone dopiero od powrotu (wcześniejsze „enter” było bez konta).
   let log = [];
   page.on("framenavigated", (frame) => { if (frame === page.mainFrame() && /\/snake\//.test(frame.url()) && !log.attached) { log = recordSnakeLog(page); log.attached = true; } });
   await loginAs(page, context, accounts.standard[0], { url: `${SITE}${loginHref}`, expectUrl: /\/snake\/\?qr=00000000-0000-4000-8000-000000000103/ });
-  await expect(page.locator("#snakeProgress")).toContainText("na koncie", { timeout: 30_000 });
+  await expect(page.locator("#snakeAccountProgress")).toContainText("na koncie", { timeout: 30_000 });
   await expect(page.locator("#snakeLogin")).toBeHidden();
+  // Zalogowany widzi, kto gra -- nazwa konta, bez przejścia do ustawień konta.
+  await expect(page.locator("#snakeAccount")).toBeVisible();
+  await expect(page.locator("#snakeAccount")).toContainText(accounts.standard[0].username);
+  expect(await page.locator("#snakeAccount").evaluate((el) => el.tagName)).not.toBe("A");
   await expect.poll(() => log.find((e) => e.kind === "enter")?.body?.ok, { timeout: 15_000 }).toBe(true);
   const before = log.find((e) => e.kind === "enter").body.games;
   await playUntilCrash(page);
   await expect.poll(() => log.find((e) => e.kind === "finish")?.body?.games, { timeout: 15_000 }).toBe(before + 1);
   const finish = log.find((e) => e.kind === "finish").body;
-  await expect(page.locator("#snakeProgress")).toContainText(`gry: ${before + 1}`);
+  await expect(page.locator("#snakeAccountProgress")).toContainText(`gry: ${before + 1}`);
   expect(finish.best).toBeGreaterThanOrEqual(0);
 });
 

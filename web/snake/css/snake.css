@@ -116,7 +116,31 @@ body.snake-body {
   text-align: right;
 }
 .snake-account-note:empty { display: none; }
-
+/* Zalogowany: nazwa konta (tylko informacja, nie przycisk) -- wysokość i ramka
+   jak przyciski w rogach. */
+.snake-who {
+  height: 44px;
+  max-width: min(calc(50vw - 150px), 320px);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--w-25);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  box-shadow: 0 4px 14px var(--k-40);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+.snake-who[hidden] { display: none; }
+.snake-who .ico { width: 20px; height: 20px; flex: 0 0 auto; }
+.snake-who-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.snake-who-name,
+.snake-who-progress { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.snake-who-progress { color: var(--text-soft); font-size: 11px; font-weight: 600; }
+.snake-who-progress:empty { display: none; }
 /* Zastępczy pełny ekran (przeglądarka bez Fullscreen API). */
 html.pseudoFS, html.pseudoFS body { width: 100%; height: 100%; overflow: hidden; }
 
