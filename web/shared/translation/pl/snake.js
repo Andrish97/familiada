@@ -7,7 +7,7 @@ const pl = {
     progressAccount: ({ best, games }) => `Rekord na koncie: ${best} · gry: ${games}`,
     progressLocal: "Zaloguj się, by zapisać rekord",
     login: "Zaloguj się",
-    accountLabel: "Konto",
+    signedInAs: ({ name }) => `Zalogowano jako ${name}`,
     home: "Familijna",
     rotateMessage: "Obróć telefon poziomo — wąż jeździ po całym Wyświetlaczu.",
     board: {

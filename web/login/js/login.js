@@ -1,7 +1,7 @@
-import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T15573";
-import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-29T15573";
+import { ensureUsernameAvailable } from "../../shared/js/core/username-availability.js?v=v2026-10-29T16143";
+import { holdPageLayout, redirectPage } from "../../shared/js/core/page-layout.js?v=v2026-10-29T16143";
 // js/pages/login.js
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T15573";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T16143";
 
 guardViewportWidth({ minWidth: 0 });
 import {
@@ -23,17 +23,17 @@ import {
   clearGuestLocalMarker,
   initPasswordToggles,
   resetPasswordToggles,
-} from "../../shared/js/core/auth.js?v=v2026-10-29T15573";
-import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T15573";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T15573";
+} from "../../shared/js/core/auth.js?v=v2026-10-29T16143";
+import { isGuestUser } from "../../shared/js/core/guest-mode.js?v=v2026-10-29T16143";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T16143";
 
-import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T15573";
-import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T15573";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T15573";
-import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T15573";
-import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T15573";
-import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T15573";
-import "../../shared/js/core/contact-modal.js?v=v2026-10-29T15573";
+import { PAGES, manualHref } from "../../shared/js/core/nav-map.js?v=v2026-10-29T16143";
+import { isScreenshotId } from "../../shared/js/core/poll-links.js?v=v2026-10-29T16143";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T16143";
+import { mailCooldownEmailCheck, mailCooldownEmailReserve } from "../../shared/js/core/cooldown.js?v=v2026-10-29T16143";
+import { initI18n, t, getUiLang, withLangParam, applyTranslations } from "../../shared/translation/translation.js?v=v2026-10-29T16143";
+import { iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T16143";
+import "../../shared/js/core/contact-modal.js?v=v2026-10-29T16143";
 
 const $ = (s) => document.querySelector(s);
 const email = $("#email");
@@ -846,6 +846,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const syncManual = () => btnManual?.setAttribute("href", manualHref("login"));
   syncManual();
   window.addEventListener("i18n:lang", syncManual);
+  // Logowanie z gry w węża: powrót do gry (ten sam kod QR), także po nieudanej próbie.
+  const btnBackHome = document.getElementById("btnBackHome");
+  if (btnBackHome && hasNextTarget && nextTarget === "snake") {
+    btnBackHome.dataset.i18n = "index.backSnake";
+    const syncBack = () => {
+      const u = new URL(buildNextUrl());
+      btnBackHome.setAttribute("href", `${u.pathname}${u.search}`);
+      btnBackHome.innerHTML = iconText("arrow-left", t("index.backSnake"));
+    };
+    syncBack();
+    window.addEventListener("i18n:lang", syncBack);
+  }
   const syncLanguage = () => updateUserLanguage(getUiLang());
   applyMode();
   initPasswordToggles();

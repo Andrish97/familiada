@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nbJnxtqjYzMlWJRm7Lw7tGPljoZgRDMYdj7nKql9lOLs19rG3FwPxMsF6vObnv0
+\restrict nZsozmGKd31gekzIdqkIdlpGfn7vNTUoDTB8SxRdMcGBYKCIysELAlIzEsJZ4Yi
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -11698,6 +11698,33 @@ begin
        new.username is null or new.username !~ '^[a-zA-Z0-9_.-]{3,20}$'
        or lower(new.username) like 'guest\_%') then
     raise exception 'username_invalid' using errcode = '22023';
+  end if;
+  return new;
+end;
+$_$;
+
+
+--
+-- Name: guard_qb_names(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."guard_qb_names"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    SET "search_path" TO 'public'
+    AS $_$
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+  if tg_op = 'UPDATE' and new.name is not distinct from old.name then
+    return new;
+  end if;
+  if tg_table_name = 'qb_tags'
+     and (char_length(coalesce(new.name, '')) > 40 or coalesce(new.name, '') !~ '^[a-zA-Z0-9_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$') then
+    raise exception 'qb:invalid' using errcode = 'P0001';
+  end if;
+  if tg_table_name = 'qb_categories' and char_length(coalesce(new.name, '')) > 80 then
+    raise exception 'name_too_long' using errcode = '22001';
   end if;
   return new;
 end;
@@ -23601,6 +23628,20 @@ CREATE TRIGGER "a_guard_profile_client_write" BEFORE INSERT OR UPDATE ON "public
 
 
 --
+-- Name: qb_categories a_guard_qb_names; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_qb_names" BEFORE INSERT OR UPDATE OF "name" ON "public"."qb_categories" FOR EACH ROW EXECUTE FUNCTION "public"."guard_qb_names"();
+
+
+--
+-- Name: qb_tags a_guard_qb_names; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "a_guard_qb_names" BEFORE INSERT OR UPDATE OF "name" ON "public"."qb_tags" FOR EACH ROW EXECUTE FUNCTION "public"."guard_qb_names"();
+
+
+--
 -- Name: qb_tags a_guard_qb_tag_color; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -27039,5 +27080,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nbJnxtqjYzMlWJRm7Lw7tGPljoZgRDMYdj7nKql9lOLs19rG3FwPxMsF6vObnv0
+\unrestrict nZsozmGKd31gekzIdqkIdlpGfn7vNTUoDTB8SxRdMcGBYKCIysELAlIzEsJZ4Yi
 
