@@ -1,6 +1,6 @@
-import { holdPageLayout } from "../js/core/page-layout.js?v=v2026-10-29T12525";
-import { icon, iconText } from "../js/core/icons.js?v=v2026-10-29T12525";
-import { applyLegacyHandoff } from "../js/core/legacy-handoff.js?v=v2026-10-29T12525";
+import { holdPageLayout } from "../js/core/page-layout.js?v=v2026-10-29T13000";
+import { icon, iconText } from "../js/core/icons.js?v=v2026-10-29T13000";
+import { applyLegacyHandoff } from "../js/core/legacy-handoff.js?v=v2026-10-29T13000";
 
 // Przenosiny ze starej domeny przed pierwszym odczytem uiLang (do usunięcia po 2026-12-01).
 applyLegacyHandoff();
@@ -15,7 +15,7 @@ const LANG_META = {
   uk: { lang: "uk", label: "Українська", icon: "flag-ua" },
 };
 const ASSET_VERSION = new URL(import.meta.url).search;
-import { placeDropdown } from "../js/core/popover.js?v=v2026-10-29T12525";
+import { placeDropdown } from "../js/core/popover.js?v=v2026-10-29T13000";
 
 const LANG_ORDER = ["pl", "en", "uk"];
 let pageParts = null;
