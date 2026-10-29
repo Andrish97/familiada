@@ -1208,7 +1208,15 @@ export function initDrawEditor(ctx) {
   btn.undo?.addEventListener("click", () => void undo());
   btn.redo?.addEventListener("click", () => void redo());
   btn.duplicate?.addEventListener("click", duplicateSelection);
-  btn.eye?.addEventListener("click", () => {
+  btn.eye?.addEventListener("click", async () => {
+    // Podgląd zaraz po rysowaniu: odświeżenie miniatury (schedulePreview)
+    // mogło jeszcze nie zdążyć -- liczymy kropki z aktualnej sceny, jak zapis.
+    if (canvas) {
+      clearTimeout(previewTimer);
+      const seq = ++previewSeq;
+      const b = await sceneToBits(fabric(), snapshot(), worldW, worldH);
+      if (seq === previewSeq) { bits = b; ctx.onPreview?.({ kind: "PIX", bits }); }
+    }
     window.dispatchEvent(new CustomEvent("logoeditor:openPreview", { detail: { kind: "PIX", bits } }));
   });
   btn.bg?.addEventListener("click", () => {

@@ -50,6 +50,20 @@ const test = base.test.extend({
     await ensureApiOriginRouting(context);
     await use(context);
   },
+  // Po nieudanym teście: otwarte okna (.uni-overlay) na każdej stronie --
+  // „<div class="overlay uni-overlay"> intercepts pointer events” bez zrzutu
+  // nie mówi, które okno zasłoniło przycisk.
+  page: async ({ page }, use, testInfo) => {
+    await use(page);
+    if (testInfo.status === testInfo.expectedStatus) return;
+    for (const p of page.context().pages()) {
+      const open = await p.evaluate(() => [...document.querySelectorAll(".uni-overlay")]
+        .filter((el) => el.offsetParent !== null || getComputedStyle(el).display !== "none")
+        .map((el) => (el.id ? `#${el.id} ` : "") + (el.innerText || "").replace(/\s+/g, " ").trim().slice(0, 160)))
+        .catch(() => []);
+      if (open.length) console.log(`[e2e-diag] otwarte okna na ${new URL(p.url()).pathname}: ${JSON.stringify(open)}`);
+    }
+  },
   browser: [async ({ browser }, use) => {
     if (process.env.E2E_API_ORIGIN) {
       const newContext = browser.newContext.bind(browser);
