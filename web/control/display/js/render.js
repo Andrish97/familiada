@@ -37,11 +37,11 @@ import {
   FINAL_OUT_ANIM,
   LOGO_IN_ANIM,
   LOGO_OUT_ANIM,
-} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-29T14064";
+} from "../../../shared/js/gameplay/displayAnim.js?v=v2026-10-29T14490";
 import {
   ROUND_TEXT_MS, ROUND_POINTS_MS, ROUND_SUMA_MS, FINAL_TEXT_MS, FINAL_POINTS_MS,
   BOARD_OUT_MS, BOARD_IN_MS, LOGO_OUT_MS, LOGO_IN_MS, DUEL_X_FLASH_MS,
-} from "../../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T14064";
+} from "../../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T14490";
 
 function pad3(n) { return String(Math.max(0, Number(n) || 0)).padStart(3, " "); }
 
