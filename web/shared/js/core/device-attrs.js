@@ -9,8 +9,8 @@
 //                    niższe o ponad KEYBOARD_MIN px): stopka znika, aktywne
 //                    pole przewija się do widoku w swoim kontenerze
 // Początkowe atrybuty ustawia klasyczny page-boot.js; ten moduł je aktualizuje.
-import "./page-layout.js?v=v2026-10-29T13391";
-import { editableFocused } from "./device-guard.js?v=v2026-10-29T13391";
+import "./page-layout.js?v=v2026-10-29T13434";
+import { editableFocused } from "./device-guard.js?v=v2026-10-29T13434";
 
 export const { NARROW_MAX, deviceLayout } = globalThis.FamilijnaDevice;
 
@@ -29,8 +29,10 @@ function apply() {
   if (changed) document.dispatchEvent(new CustomEvent("device:change", { detail: next }));
 }
 
-// Klawiatura: okno (resizes-content) albo widoczna część (visualViewport)
-// niższe niż najwyższe zapamiętane przy tej szerokości.
+// Klawiatura: widoczna część (visualViewport; strony mają
+// interactive-widget=resizes-visual — klawiatura zasłania, a nie kurczy
+// strony, decyzja użytkownika 2026-10-29) albo okno (przeglądarki, które
+// mimo to kurczą okno) niższe niż najwyższe zapamiętane przy tej szerokości.
 const KEYBOARD_MIN = 120;
 let fullHeight = { width: 0, height: 0 };
 

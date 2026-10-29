@@ -16,10 +16,10 @@
 // lub tablet, a w pionie strona się mieści), w innym razie „Za małe okno”
 // (komputer, telewizor albo strona, której obrót nie pomoże, np. próg 980 px).
 
-import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-29T13391";
+import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-29T13434";
 
 
-import "./page-boot.js?v=v2026-10-29T13391";
+import "./page-boot.js?v=v2026-10-29T13434";
 export const { getDeviceProfile, editableFocused, PHONE_MAX_SHORT_SIDE } = globalThis.FamilijnaDevice;
 const { keyboardLikely, KEYBOARD_CLOSE_MS } = globalThis.FamilijnaDevice;
 export const MIN_WORK_WIDTH = 980;
@@ -91,7 +91,7 @@ function rawGuardState(minWidth, { formFactors = null, requiresTouch = false, mi
   // telefon w landscape pozostaje osobną regułą powyżej. Strona bez progu
   // szerokości (minWidth 0, np. Wskazówki, listy) działa w każdym widoku.
   if (minWidth > 0 && profile.formFactor === "tablet") {
-    // Klawiatura ekranowa też obniża okno (resizes-content), ale to nie jest
+    // Klawiatura ekranowa może obniżyć okno (przeglądarki bez resizes-visual), ale to nie jest
     // widok dzielony (blokada po otwarciu klawiatury, zgłoszenie 2026-10-29).
     const shortSide = profile.screenShortSide;
     const splitHeight = profile.viewportHeight < shortSide * 0.7 && !virtualKeyboardLikely(profile);
