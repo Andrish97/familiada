@@ -554,28 +554,12 @@ export async function signOut() {
   clearGuestLocalMarker();
 }
 
-export async function resetPassword(email, redirectTo, language, captchaToken = null) {
-  const normalized = String(email || "").trim().toLowerCase();
-  if (!normalized.includes("@")) throw new Error(t("auth.errResetMissingLogin"));
-
-  const resetRedirectTo = redirectTo || buildAuthRedirect("/login/reset/", language);
-
-  const options = { redirectTo: resetRedirectTo };
-  if (language) options.data = { language };
-  if (captchaToken) options.captchaToken = captchaToken;
-
-  const { error } = await sb().auth.resetPasswordForEmail(normalized, options);
-  if (error) throw new Error(niceAuthError(error));
-
-  return normalized; // login.js zapisze cooldown per konkretny email
-}
-
-// Reset po nazwie użytkownika: Worker rozwiązuje nazwę, rezerwuje cooldown
-// i wysyła link; adres e-mail nie wraca do przeglądarki.
-// { sent, nextAllowedAtMs }
-export async function resetPasswordByUsername(username, language, captchaToken = null) {
+// Reset hasła po nazwie użytkownika albo adresie e-mail: Worker rozwiązuje
+// nazwę, rezerwuje cooldown (tylko serwer, migracja 513) i wysyła link; adres
+// e-mail konta nie wraca do przeglądarki. { sent, nextAllowedAtMs }
+export async function resetPasswordByLogin(login, language, captchaToken = null) {
   const { status, data } = await authApi("reset", {
-    login: String(username || "").trim(),
+    login: String(login || "").trim(),
     lang: language,
     ...(captchaToken ? { captcha_token: captchaToken } : {}),
   });

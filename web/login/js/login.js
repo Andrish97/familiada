@@ -12,8 +12,7 @@ import {
   sendSignupConfirmation,
   convertGuestToRegisteredEmailOnly,
   discardCurrentGuestAccount,
-  resetPassword,
-  resetPasswordByUsername,
+  resetPasswordByLogin,
   prepareConfirmationResend,
   updateUserLanguage,
   validatePassword,
@@ -57,7 +56,6 @@ const setupTitleEl = setupCard?.querySelector(".setup-title");
 const setupSubEl = setupCard?.querySelector(".setup-sub");
 const baseUrls = document.body?.dataset || {};
 const confirmUrl = baseUrls.confirmUrl || "/login/confirm/";
-const resetUrl = baseUrls.resetUrl || "/login/reset/";
 const gamesUrl = baseUrls.gamesUrl || "/games/";
 const captchaProvider = String(baseUrls.captchaProvider || "hcaptcha").trim().toLowerCase();
 const captchaSiteKey = String(baseUrls.captchaSiteKey || "").trim();
@@ -1112,74 +1110,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-      // Nazwa użytkownika: Worker rozwiązuje nazwę, pilnuje cooldownu i wysyła
-      // link -- adres e-mail konta nie trafia do przeglądarki.
-      if (!loginOrEmail.includes("@")) {
-        const key = loginOrEmail.toLowerCase();
-        if (getForgotUntil(key) > Date.now()) {
-          setStatus(t("index.statusResetSent"));
-          showForgotCooldownForEmail(key);
-          return;
-        }
-        setStatus(t("index.statusResetSending"));
-        let captchaToken = await getCaptchaTokenOrPrompt();
-        let result;
-        try {
-          result = await resetPasswordByUsername(loginOrEmail, getUiLang(), captchaToken);
-        } catch (e) {
-          if (!isCaptchaError(e)) throw e;
-          captchaToken = await getCaptchaTokenOrPrompt();
-          result = await resetPasswordByUsername(loginOrEmail, getUiLang(), captchaToken);
-        }
-        if (result.nextAllowedAtMs) setForgotUntil(key, result.nextAllowedAtMs);
+      // Worker rozwiązuje nazwę (adres e-mail konta nie trafia do przeglądarki),
+      // pilnuje cooldownu i limitów, wysyła link -- tak samo dla adresu e-mail.
+      const key = loginOrEmail.toLowerCase();
+      // Adres e-mail: odliczanie z serwera (także z innego urządzenia).
+      if (key.includes("@")) await refreshForgotUntil(key);
+      if (getForgotUntil(key) > Date.now()) {
         setStatus(t("index.statusResetSent"));
-        hideForgotCooldown();
+        setErr("");
         showForgotCooldownForEmail(key);
         return;
       }
-      const resolved = loginOrEmail.toLowerCase();
-      // 1) cooldown check (per email, cross-device)
-      await refreshForgotUntil(resolved);
-      const until = getForgotUntil(resolved);
-      const left = until - Date.now();
-      if (left > 0) {
-        setStatus(t("index.statusResetSent"));
-        setErr("");
-        showForgotCooldownForEmail(resolved);
-        return;
-      }
-      // 2) reserve cooldown (cross-device) + send
-      const reserve = await mailCooldownEmailReserve(RESET_ACTION_KEY, resolved);
-      if (reserve.nextAllowedAtMs) setForgotUntil(resolved, reserve.nextAllowedAtMs);
-
-      if (!reserve.ok) {
-        setStatus(t("index.statusResetSent"));
-        setErr("");
-        showForgotCooldownForEmail(resolved);
-        return;
-      }
-
       setStatus(t("index.statusResetSending"));
-      const redirectTo = buildAuthRedirect(resetUrl);
-
       let captchaToken = await getCaptchaTokenOrPrompt();
-      let usedEmail;
+      let result;
       try {
-        usedEmail = await resetPassword(resolved, redirectTo, getUiLang(), captchaToken);
+        result = await resetPasswordByLogin(loginOrEmail, getUiLang(), captchaToken);
       } catch (e) {
-        if (isCaptchaError(e)) {
-          captchaToken = await getCaptchaTokenOrPrompt();
-          usedEmail = await resetPassword(resolved, redirectTo, getUiLang(), captchaToken);
-        } else {
-          throw e;
-        }
+        if (!isCaptchaError(e)) throw e;
+        captchaToken = await getCaptchaTokenOrPrompt();
+        result = await resetPasswordByLogin(loginOrEmail, getUiLang(), captchaToken);
       }
-
-      if (reserve.nextAllowedAtMs) setForgotUntil(usedEmail, reserve.nextAllowedAtMs);
-
+      if (result.nextAllowedAtMs) setForgotUntil(key, result.nextAllowedAtMs);
       setStatus(t("index.statusResetSent"));
       hideForgotCooldown();
-      showForgotCooldownForEmail(usedEmail);
+      showForgotCooldownForEmail(key);
 } catch (e) {
       console.error(e);
       setStatus(t("auth.statusError"));

@@ -128,7 +128,7 @@ function ratingBody(current = null) {
       <div class="stars-row">
           ${[1, 2, 3, 4, 5].map(v => `<button class="star-btn" type="button" data-value="${v}" aria-label="${v}/5">${icon("star")}</button>`).join("")}
       </div>
-      <textarea class="inp rating-comment" rows="3" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>`;
+      <textarea class="inp rating-comment" rows="3" maxlength="2000" placeholder="${t("common.rating.modal.commentPlaceholder")}"></textarea>`;
   const stars = body.querySelectorAll(".star-btn");
   const commentEl = body.querySelector(".rating-comment");
   commentEl.value = current?.comment || "";

@@ -31,6 +31,7 @@ import { isResourceBusy, acquireResourceLock } from "../../shared/js/core/resour
 import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-29T13391";
 import { icon } from "../../shared/js/core/icons.js?v=v2026-10-29T13391";
 import { initListHeaderLayout } from "../../shared/js/core/list-header-layout.js?v=v2026-10-29T13391";
+import { LOGO_NAME_MAX } from "./package.js?v=v2026-10-29T13391";
 
 import { TYPE_GLYPH, TYPE_PIX, PIX_FORMAT, DOT_W, DOT_H, emptyRows, packBits, renderPreview, logoToPreview } from "./render.js?v=v2026-10-29T13391";
 import { listLogos, fetchLogo, createLogo, updateLogo, deleteLogo, isUniqueViolation, uploadImportedLogoImage, removeLogoImageUrl } from "./db.js?v=v2026-10-29T13391";
@@ -127,14 +128,16 @@ function esc(s) {
 
 /** Nazwa niekolidująca (bez względu na wielkość liter) z innymi logo użytkownika. */
 function makeUniqueName(baseName, excludeId = null) {
-  const base = String(baseName || "").trim() || defaultName();
+  const base = (String(baseName || "").trim() || defaultName()).slice(0, LOGO_NAME_MAX);
   const used = new Set(logos.filter((l) => l.id !== excludeId).map((l) => String(l.name || "").trim().toLowerCase()));
   if (!used.has(base.toLowerCase())) return base;
+  // Dopisek „ (n)” mieści się w limicie nazwy -- skracamy podstawę.
+  const withSuffix = (suffix) => `${base.slice(0, LOGO_NAME_MAX - suffix.length).trimEnd()}${suffix}`;
   for (let i = 2; i < 10000; i++) {
-    const cand = `${base} (${i})`;
+    const cand = withSuffix(` (${i})`);
     if (!used.has(cand.toLowerCase())) return cand;
   }
-  return `${base} (${Date.now()})`;
+  return withSuffix(` (${Date.now()})`);
 }
 
 /** Komunikat dla odmowy z RPC *_checked -- tylko POWÓD, nigdy która to strona. */
