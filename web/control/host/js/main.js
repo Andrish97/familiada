@@ -9,6 +9,7 @@
 
 import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-29T04380";
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-29T04380";
+import { initWakePrompt } from "../../../shared/js/core/wake-prompt.js?v=v2026-10-29T04380";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-29T04380";
 
 import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-29T04380";
@@ -209,6 +210,8 @@ async function main() {
   // Wszystkie trzy urządzenia utrzymują ekran aktywny przez Wake Lock
   // oraz zapasowy, wyciszony strumień wideo. Podgląd w ustawieniach nie.
   startKeepAlive();
+  // iPhone/iPad: blokada wygaszania wymaga dotknięcia (wake-prompt.js).
+  initWakePrompt();
   let subscription = null;
   const lease = createDeviceLease({ onGameRev: (rev) => subscription?.noteServerRevision?.(rev), gameId, deviceType: "host", key, onState: ({ state }) => {
     updateDeviceLeaseOverlay(state);

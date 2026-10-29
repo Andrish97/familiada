@@ -94,6 +94,8 @@ async function capture(browser, origin, scene, lang, deviceName, outDir) {
   const safeArea = scene.safeArea || IPHONE_SAFE_AREA[deviceName];
   if (safeArea) await emulateSafeArea(context, origin, safeArea);
   if (args.audit) await context.addInitScript(observeLayoutShifts);
+  // Przeglądarka, której nie da się ustawić opcjami kontekstu (np. Safari na iPhonie).
+  if (scene.initScript) await context.addInitScript(scene.initScript);
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));

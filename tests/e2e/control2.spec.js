@@ -805,7 +805,7 @@ async function openAnon(browser, contexts, path, label, errors, { onPage } = {})
   } : {});
   contexts.push(ctx);
   const p = await ctx.newPage();
-  onPage?.(p);
+  await onPage?.(p);
   trackErrors(p, label, errors);
   instrumentAnon(p, label);
   await p.goto(path, { waitUntil: "domcontentloaded" });
@@ -3860,7 +3860,17 @@ test("control2: Przycisk wraca z tła po wygaśnięciu lease bez odmowy odczytu 
   try {
     await openAnon(browser, contexts, `/control/display?id=${game.id}&key=${game.share_key_display}`, "display", errors);
     await openAnon(browser, contexts, `/control/host?id=${game.id}&key=${game.share_key_host}`, "host", errors);
-    const buzzer = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors);
+    // iPad: Chromium bez gestu odmawia blokady wygaszania (NotAllowedError),
+    // jak Safari — ekran „Nie wygaszaj ekranu” (wake-prompt.js).
+    const buzzer = await openAnon(browser, contexts, `/control/buzzer?id=${game.id}&key=${game.share_key_buzzer}`, "buzzer", errors, {
+      onPage: (p) => p.addInitScript(() => Object.defineProperty(navigator, "userAgent", {
+        get: () => "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      })),
+    });
+    const wakeOverlay = buzzer.locator("#deviceWakeOverlay.is-open");
+    await expect(wakeOverlay).toBeVisible({ timeout: 20000 });
+    await buzzer.locator("#deviceWakeConfirm").click();
+    await expect(wakeOverlay).toHaveCount(0);
     await page.goto(`/control?id=${game.id}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 20000 });
     await page.getByRole("button", { name: "Dalej" }).click();
@@ -3888,9 +3898,12 @@ test("control2: Przycisk wraca z tła po wygaśnięciu lease bez odmowy odczytu 
     for (const route of held) await route.continue().catch(() => {});
     await expect(page.locator("#dotBuzzer")).toHaveClass(/\bok\b/, { timeout: 30000 });
     console.log(`[e2e-diag] resume: Przycisk z powrotem po ${Date.now() - resumedAt} ms`);
+    // Po powrocie z tła ekran wraca (przyciski wyłączone), w pojedynku znika.
+    await expect(wakeOverlay).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Rozpocznij rundę" }).click();
     await expect(buzzer.locator("#btnA")).toBeEnabled({ timeout: 30000 });
+    await expect(wakeOverlay).toHaveCount(0);
     await buzzer.locator("#btnA").click();
     await expect(page.getByRole("button", { name: /^Zatwierdź:/ })).toBeVisible({ timeout: 20000 });
     expect(denied, "odmowy po powrocie z tła").toEqual([]);

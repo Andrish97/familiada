@@ -366,6 +366,13 @@ module.exports = [
   // ======================= Przycisk (urządzenie z kluczem) =======================
   { id: "play-buzzer-off", category: CAT, title: "Przycisk — przed pojedynkiem (wyłączony)", path: BUZZER_URL, sources: BUZZER, gameState: "devices", ready: "#offScreen.skel-step-ready", devices: BUZZER_DEVICES,
     steps: [dropRealtimeTokenMiss], db: buzzerDb() },
+  // Safari na iPhonie odmawia blokady wygaszania bez dotknięcia (wake-prompt.js).
+  { id: "play-buzzer-wake", category: CAT, title: "Przycisk — iPhone: ekran „Nie wygaszaj ekranu”", path: BUZZER_URL, sources: [...BUZZER, "web/shared/js/core/wake-prompt.js"], gameState: "devices", ready: "#deviceWakeOverlay.is-open", devices: ["phone-landscape"],
+    initScript: () => {
+      Object.defineProperty(navigator, "userAgent", { get: () => "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1" });
+      Object.defineProperty(navigator, "wakeLock", { get: () => ({ request: () => Promise.reject(new DOMException("Wake Lock permission request denied", "NotAllowedError")) }) });
+    },
+    steps: [dropRealtimeTokenMiss], db: buzzerDb() },
   { id: "play-buzzer-on", category: CAT, title: "Przycisk — pojedynek: gotowy do naciśnięcia", path: BUZZER_URL, sources: BUZZER, gameState: "round", ready: "#arena.skel-step-ready", devices: BUZZER_DEVICES, settle: 800,
     steps: [dropRealtimeTokenMiss], db: buzzerDb((row, d) => { S.duel(row, d); d.rounds.duel.lastPressed = null; }) },
   { id: "play-buzzer-pushed", category: CAT, title: "Przycisk — drużyna A nacisnęła pierwsza", path: BUZZER_URL, sources: BUZZER, gameState: "round", ready: "#arena.skel-step-ready", devices: BUZZER_DEVICES, settle: 800,

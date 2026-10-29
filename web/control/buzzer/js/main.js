@@ -12,6 +12,7 @@
 
 import { initI18n, setUiLang } from "../../../shared/translation/translation.js?v=v2026-10-29T04380";
 import { startKeepAlive } from "../../../shared/js/core/keep-alive.js?v=v2026-10-29T04380";
+import { initWakePrompt } from "../../../shared/js/core/wake-prompt.js?v=v2026-10-29T04380";
 import { guardViewportWidth } from "../../../shared/js/core/device-guard.js?v=v2026-10-29T04380";
 import { sb } from "../../../shared/js/core/supabase.js?v=v2026-10-29T04380";
 import { createSubscription } from "../../../shared/js/core/game-state-subscribe.js?v=v2026-10-29T04380";
@@ -49,6 +50,9 @@ async function main() {
   const { gameId, key } = parseParams();
   const loadError = document.getElementById("deviceLoadError");
   const offScreen = document.getElementById("offScreen");
+  // iPhone/iPad: ekran „nie wygaszaj” tylko przy wyłączonych przyciskach —
+  // w pojedynku nie może zabrać naciśnięcia, a samo naciśnięcie jest gestem.
+  const wakePrompt = initWakePrompt({ canShow: () => !!offScreen && !offScreen.hidden });
   const revealStep = (element) => {
     if (!element) return;
     element.hidden = false;
@@ -157,6 +161,7 @@ async function main() {
       }
       lastRow = row;
       presses.render(row);
+      wakePrompt.sync();
       lease.setProgress({ renderedRev: Number(row.rev) || 0 });
       initialStateReady = true;
       if (loadError) loadError.hidden = true;

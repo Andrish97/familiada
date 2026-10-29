@@ -7,6 +7,11 @@ const pl = {
     reconnectingTitle: "Sprawdzam połączenie urządzenia",
     reconnectingText: "Do czasu potwierdzenia połączenia ten ekran nie steruje grą. Spróbuję połączyć się ponownie automatycznie.",
   },
+  deviceWake: {
+    title: "Ekran może się wygasić",
+    text: "Telefon wygasi ekran w trakcie gry i straci połączenie z grą. Dotknij przycisku poniżej — ekran zostanie włączony.",
+    confirm: "Nie wygaszaj ekranu",
+  },
   host: {
     title: "Familijna — prowadzący",
     swipeRevealDown: "Przesuń w dół, żeby odsłonić",

@@ -7,6 +7,11 @@ const en = {
     reconnectingTitle: "Checking the device connection",
     reconnectingText: "This screen cannot control the game until its connection is confirmed. It will retry automatically.",
   },
+  deviceWake: {
+    title: "The screen may turn off",
+    text: "The phone will turn off its screen during the game and lose the connection. Tap the button below to keep the screen on.",
+    confirm: "Keep screen on",
+  },
   host: {
     title: "Familijna — host",
     swipeRevealDown: "Swipe down to reveal",

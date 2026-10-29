@@ -100,6 +100,10 @@ Każdy punkt: **objaw** → możliwa przyczyna → co zrobić.
   ekranu i nie przełączaj aplikacji. Gdy używasz przycisków fizycznych albo grasz bez tabletu
   prowadzącego — zaznacz odpowiednią opcję w panelu (→ 17.1). Po powrocie do strony urządzenie
   łączy się samo w kilka sekund.
+- **„Ekran może się wygasić”** na iPhonie lub iPadzie → Safari pozwala utrzymać włączony ekran
+  dopiero po dotknięciu strony → naciśnij [Nie wygaszaj ekranu]; komunikat wraca po powrocie
+  z innej aplikacji. Na przycisku do pojedynku pojawia się tylko, gdy przyciski są wyłączone.
+  Jeśli ekran i tak gaśnie, wyłącz tryb oszczędzania energii.
 - **Kod QR zeskanowano kilka razy** → działa ekran otwarty jako ostatni, poprzednie pokazują
   „Urządzenie otwarto w innym miejscu” → korzystaj z najnowszego ekranu, zbędne karty zamknij.
 - **„Urządzenie otwarto w innym miejscu”** → to samo urządzenie (Przycisk, ekran prowadzącego lub

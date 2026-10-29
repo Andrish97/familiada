@@ -11,6 +11,7 @@
 //   previewRow-- stan wysłany do trybu podglądu urządzenia (?preview=1); frame -- przez ramkę rodzica
 //   guest     -- odwiedzający bez konta i sesji (atrapa nie zwraca użytkownika)
 //   safeArea  -- emulacja strefy bezpiecznej { top, bottom, … } (env(safe-area-inset-*) w CSS strony)
+//   initScript -- funkcja uruchamiana na stronie przed jej skryptami (np. przeglądarka iPhone'a)
 //   deviceFrame -- "iphone": ekran w ramce iPhone'a na czarnym tle (frameSize: { width, height, scale })
 //   db        -- (db, lang) => {} -- zmiana danych atrapy tylko dla tej sceny (pusty stan, błąd, inny stan)
 // Sceny obszarów (pełna seria stron, okien i stanów) są w scenes/<obszar>.cjs i dołączane na końcu.
