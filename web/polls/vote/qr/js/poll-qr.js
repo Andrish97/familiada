@@ -1,10 +1,10 @@
 // Kod QR rysowany lokalnie (SVG), jak w Control i na Wyświetlaczu — bez zewnętrznej biblioteki z CDN.
-import { qrDataUrl } from "../../../../shared/js/core/qr-code.js?v=v2026-10-29T13232";
-import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-29T13232";
-import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../../shared/js/core/device-guard.js?v=v2026-10-29T13232";
-import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-29T13232";
-import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-29T13232";
-import { initFullscreenButton } from "../../../../shared/js/core/fullscreen.js?v=v2026-10-29T13232";
+import { qrDataUrl } from "../../../../shared/js/core/qr-code.js?v=v2026-10-29T13244";
+import { anonymousPollLink } from "../../../../shared/js/core/poll-links.js?v=v2026-10-29T13244";
+import { guardViewportWidth, MIN_WORK_HEIGHT } from "../../../../shared/js/core/device-guard.js?v=v2026-10-29T13244";
+import { sb } from "../../../../shared/js/core/supabase.js?v=v2026-10-29T13244";
+import { initI18n, setUiLang, t, getUiLang } from "../../../../shared/translation/translation.js?v=v2026-10-29T13244";
+import { initFullscreenButton } from "../../../../shared/js/core/fullscreen.js?v=v2026-10-29T13244";
 
 
 // 1. Inicjalizacja i18n
