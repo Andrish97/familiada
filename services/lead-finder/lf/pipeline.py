@@ -38,7 +38,9 @@ class Stopped(Exception):
 
 def search_queries(cat, pages):
     """Klucze zapytań wyszukiwarki kategorii: search:<kategoria>:<strona>:<fraza>."""
-    return [f'search:{cat["id"]}:{p}:{q}' for p in range(1, pages + 1) for q in cat.get('queries') or []]
+    # Frazy ze słowem wykluczającym (np. „pokaz ognia na wesele”) nie są szukane.
+    queries = [q for q in cat.get('queries') or [] if not filters.has_keyword(q, filters.NEGATIVE_KEYWORDS)]
+    return [f'search:{cat["id"]}:{p}:{q}' for p in range(1, pages + 1) for q in queries]
 
 
 def ceidg_queries(cat):

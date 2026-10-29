@@ -17,7 +17,10 @@ Zwróć JSON:
 Frazy:
 - nie powtarzaj ani nie przestawiaj słów z fraz powyżej; szukaj innych nazw
   usługi, innych okazji (urodziny, firmowe, szkolne, plenerowe), innych
-  sformułowań oferty i innych typów wykonawców tej samej kategorii;
+  sformułowań oferty i innych typów wykonawców tej samej kategorii — tylko
+  takich, którzy prowadzą zabawy, gry lub konkursy z gośćmi;
+- żadnych fraz o samych pokazach (ogień, barmańskie, taneczne, iluzja),
+  salach, hotelach, cateringu, kwiatach, dekoracjach, fotografii i filmowaniu;
 - mają dawać wyniki, w których opisie widać adres e-mail: mieszaj warianty
   z „kontakt e-mail”, „@gmail.com”, „@wp.pl”, „@o2.pl”, „oferta e-mail”,
   „napisz do nas”, „rezerwacja terminu e-mail”;

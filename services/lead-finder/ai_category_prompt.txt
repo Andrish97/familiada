@@ -17,4 +17,7 @@ Frazy:
   z „kontakt e-mail”, „@gmail.com”, „@wp.pl”, „@o2.pl”, „oferta e-mail”,
   „napisz do nas”, „rezerwacja terminu e-mail”;
 - różne nazwy tej samej usługi i synonimy (np. DJ, didżej, oprawa muzyczna);
+- tylko dla tych, którzy prowadzą zabawy, gry lub konkursy z gośćmi — żadnych
+  fraz o samych pokazach (ogień, barmańskie, taneczne), salach, hotelach,
+  cateringu, kwiatach, dekoracjach, fotografii i filmowaniu;
 - bez nazw miast i regionów, bez operatorów site:.
