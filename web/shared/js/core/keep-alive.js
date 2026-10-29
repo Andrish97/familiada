@@ -111,30 +111,32 @@ async function acquireScreenWakeLock() {
   await requestWakeLock();
 }
 
-// Odpowiednik triku znanego z bibliotek typu NoSleep.js, bez osadzania
-// żadnego pliku wideo: MediaStream z ukrytego <canvas> (captureStream) jako
-// źródło <video muted playsinline loop autoplay>. Odtwarzanie WIDEO to
-// historycznie najbardziej niezawodny sposób trzymania ekranu aktywnym na
-// iOS/Android, niezależny od wsparcia Screen Wake Lock API — dokładnie
-// to, na czym opierają się odtwarzacze wideo, żeby ekran nie gasł w
-// trakcie odtwarzania. Działa jako DODATKOWY fallback OBOK
-// acquireScreenWakeLock() (nie zamiennik) — tam, gdzie Wake Lock API jest
-// dostępne, ekran i tak zostaje aktywny przez tamten mechanizm; to
-// pokrywa starsze/niewspierane przeglądarki (np. iOS < 16.4), gdzie
-// acquireScreenWakeLock() dziś cicho nic nie robi.
+// Odpowiednik triku z bibliotek typu NoSleep.js: wyciszony, zapętlony,
+// prawdziwy plik wideo (3 KB: czarny obraz i cicha ścieżka dźwięku) w
+// <video muted playsinline loop>. Odtwarzane wideo wstrzymuje automatyczne
+// wygaszanie ekranu na iOS i Androidzie niezależnie od Screen Wake Lock API.
+// Działa OBOK acquireScreenWakeLock() (nie zamiast): na iPhonie blokada
+// bywa odrzucana do pierwszego dotknięcia (eksporty 23–29.10), a wyciszone
+// wideo inline Safari zwykle odtwarza bez gestu. Wcześniej źródłem był
+// strumień z <canvas> (captureStream), którego iOS nie traktuje jak
+// odtwarzanego wideo.
+// MP4 (H.264) dla Safari; WebM dla Chromium bez H.264 (np. Linux).
+const KEEP_AWAKE_SOURCES = [
+  ["/assets/video/keep-awake.mp4?v=v2026-10-29T04380", "video/mp4"],
+  ["/assets/video/keep-awake.webm?v=v2026-10-29T04380", "video/webm"],
+];
 function startVideoWakeLockFallback() {
   try {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1;
-    canvas.height = 1;
-    canvas.getContext("2d")?.fillRect(0, 0, 1, 1);
-    const stream = canvas.captureStream?.(1);
-    if (!stream) return;
-
     const video = document.createElement("video");
-    video.srcObject = stream;
+    for (const [src, type] of KEEP_AWAKE_SOURCES) {
+      const source = document.createElement("source");
+      source.src = src;
+      source.type = type;
+      video.appendChild(source);
+    }
     video.muted = true;
     video.loop = true;
+    video.preload = "auto";
     video.setAttribute("muted", "");
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
@@ -142,11 +144,11 @@ function startVideoWakeLockFallback() {
     video.className = "keep-alive-video"; // niewidoczny 1×1 px (components.css)
     document.body.appendChild(video);
 
-    // Bez gestu iOS potrafi odrzucić odtwarzanie — wtedy ponawiamy gestem.
+    // Bez gestu przeglądarka potrafi odrzucić odtwarzanie — wtedy ponawiamy gestem.
     const play = () => video.play()?.catch?.(() => retryOnGesture(play));
     play();
-    // Przeglądarki potrafią wstrzymać odtwarzanie ukrytej karty — tak samo
-    // jak acquireScreenWakeLock() wyżej, wznawiamy po powrocie na widoczność.
+    // Przeglądarki wstrzymują odtwarzanie ukrytej karty — tak samo jak
+    // acquireScreenWakeLock() wyżej, wznawiamy po powrocie na widoczność.
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) play();
     });
