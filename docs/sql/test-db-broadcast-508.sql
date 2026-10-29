@@ -1,4 +1,4 @@
--- Tylko izolowana baza po local-stubs + local-realtime-stub + schema.sql + migracja 508.
+-- Tylko izolowana baza po local-stubs + local-realtime-stub + schema.sql + migracje 508 i 509.
 \set ON_ERROR_STOP on
 BEGIN;
 CREATE FUNCTION pg_temp.check_result(ok boolean, label text) RETURNS void LANGUAGE plpgsql AS $$
@@ -66,6 +66,25 @@ SELECT pg_temp.check_result((SELECT count(*)=0 FROM realtime.messages WHERE (pay
   AND topic LIKE '%00000000000d'), 'zastąpione urządzenie nie dostaje nowych zmian');
 SELECT pg_temp.check_result((SELECT count(*)=1 FROM realtime.messages WHERE (payload->'row'->>'rev')::bigint=7
   AND topic LIKE '%0000000000dd'), 'nowe połączenie Wyświetlacza dostaje zmiany');
+
+-- Dołączenie do kanału tak jak sprawdza je serwer Realtime: rola anon,
+-- claims tokenu, temat kanału, odczyt realtime.messages (polityka 508,
+-- USAGE na schemacie realtime z 509). SELECT na messages ma anon na produkcji.
+GRANT SELECT ON realtime.messages TO anon;
+CREATE TEMP TABLE claims_new AS SELECT (SELECT c FROM claims) || jsonb_build_object(
+  'connection_id','d0000000-5080-0000-0000-0000000000dd','epoch',2) AS c;
+GRANT SELECT ON claims_new, claims TO anon;
+SELECT set_config('request.jwt.claims', (SELECT c::text FROM claims_new), true);
+SELECT set_config('realtime.topic', 'game-state:cccccccc-5080-0000-0000-000000000003:d0000000-5080-0000-0000-0000000000dd', true);
+SET LOCAL ROLE anon;
+SELECT pg_temp.check_result((SELECT count(*)>0 FROM realtime.messages
+  WHERE topic='game-state:cccccccc-5080-0000-0000-000000000003:d0000000-5080-0000-0000-0000000000dd'),
+  'anon z tokenem urządzenia czyta własny kanał');
+SELECT set_config('realtime.topic', 'game-state:cccccccc-5080-0000-0000-000000000003:d0000000-5080-0000-0000-00000000000e', true);
+SELECT pg_temp.check_result((SELECT count(*)=0 FROM realtime.messages
+  WHERE topic='game-state:cccccccc-5080-0000-0000-000000000003:d0000000-5080-0000-0000-00000000000e'),
+  'anon z tokenem Wyświetlacza nie czyta kanału Prowadzącego');
+RESET ROLE;
 
 -- Koniec sesji: nikt nie dostaje kolejnych zmian.
 UPDATE public.control_runtime_sessions SET ended_at=now() WHERE id='5e550000-5080-0000-0000-000000000001';
