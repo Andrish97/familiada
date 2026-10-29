@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRenderer } from "../../web/control/display/js/render.js";
 import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
-import { ROUND_TEXT_MS, ROUND_POINTS_MS, ROUND_SUMA_MS, FINAL_TEXT_MS, FINAL_POINTS_MS, REVEAL_TILE_MS, BOARD_OUT_MS, LOGO_IN_MS } from "../../web/shared/js/gameplay/displayTiming.js";
+import { ROUND_TEXT_MS, ROUND_POINTS_MS, ROUND_SUMA_MS, FINAL_TEXT_MS, FINAL_POINTS_MS, REVEAL_TILE_MS, BOARD_TRANSITION } from "../../web/shared/js/gameplay/displayTiming.js";
 
 function row(state) { return { step: state.step, phase: state.phase, top_card: state.topCard, detail: structuredClone(state), sound_cue_key: "answer_correct" }; }
 function setup() {
@@ -11,6 +11,7 @@ function setup() {
   const gate = new Promise((resolve) => { release = resolve; });
   const api = new Proxy({}, { get: (_, group) => new Proxy({}, { get: (_, name) => (...args) => {
     calls.push({ name: `${group}.${name}`, args });
+    if (`${group}.${name}` === "big.replace") args[0]();
     if (`${group}.${name}` === "rounds.setRow" || `${group}.${name}` === "final.setLeft") return gate;
   } }) });
   const renderer = createRenderer({ scene: { api }, qr: {}, getSfxDuration: async () => 1 });
@@ -82,8 +83,10 @@ test("coalesced last score and Finish final do not replay points to final-theme 
   after.sound_cue_key = "final_theme";
   await renderer.renderDiff(before, after);
   assert.equal(calls.find(c => c.name === "final.setA").args[2].animIn.ms, 0);
-  assert.equal(calls.find(c => c.name === "big.animOut").args[0].ms, BOARD_OUT_MS);
-  const result = calls.find(c => c.name === "logo.show" || c.name === "win.set");
+  // Plansza finału przechodzi w wynik albo logo jednym przejściem planszy.
+  const replace = calls.find(c => c.name === "big.replace");
+  assert.deepEqual(replace.args[1], BOARD_TRANSITION);
+  const result = calls.find(c => c.name === "logo.draw" || c.name === "win.set");
   assert.ok(result);
-  assert.equal(result.name === "logo.show" ? result.args[0].ms : result.args[1].animIn.ms, LOGO_IN_MS);
+  assert.ok(calls.indexOf(replace) < calls.indexOf(result));
 });

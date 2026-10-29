@@ -31,10 +31,16 @@ export const FINAL_TEXT_MS = revealMs(FINAL_TEXT_TILES);
 export const FINAL_POINTS_MS = revealMs(Math.max(POINTS_TILES, SUMA_TILES));
 export const FINAL_ANSWER_TOTAL_MS = FINAL_TEXT_MS + FINAL_POINTS_MS;
 
-// Przejścia całej planszy i logo.
-export const BOARD_OUT_MS = 1200;
-export const BOARD_IN_MS = 1800;
-export const LOGO_OUT_MS = 1200;
+// Przejście planszy (decyzja właściciela 2026-10-29): stara zawartość znika
+// losowo wyrywanymi kawałkami rzędów, a nowa wjeżdża z góry, zaczynając
+// przed końcem znikania (nakładka). Też logo -> plansza i plansza -> ekran końcowy.
+// Przyspieszone po obejrzeniu (właściciel 29.10): 0,9 + 1,3 - 0,5 = 1,7 s.
+export const BOARD_OUT_MS = 900;
+export const BOARD_IN_MS = 1300;
+export const BOARD_OVERLAP_MS = 500;
+export const BOARD_TRANSITION = { outMs: BOARD_OUT_MS, inMs: BOARD_IN_MS, overlapMs: BOARD_OVERLAP_MS };
+export const BOARD_TRANSITION_MS = BOARD_OUT_MS - BOARD_OVERLAP_MS + BOARD_IN_MS;
+// Pierwsze pojawienie się logo po intro (z pustego ekranu).
 export const LOGO_IN_MS = 1800;
 
 // Błysk X przy pudle w pojedynku (był równy długości dźwięku — po przycięciu

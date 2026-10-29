@@ -6,14 +6,8 @@
 //
 // Typy 1:1 z dawnego control/js/display.js (literały ANIMIN/ANIMOUT),
 // zweryfikowane w kodzie przy przepisywaniu na display2 — nie zgadywane.
-export const ROUND_INTRO_ANIM = { type: "matrix", axis: "down" };
-export const ROUND_OUT_ANIM = { type: "edge", dir: "down" };
+// Przejścia planszy (logo, rundy, finał, ekran końcowy) mają własną animację:
+// anim.js's transition (losowe wyrywanie starej, nachodzący wjazd nowej).
 export const ANSWER_ANIM = { type: "matrix", axis: "right" };
-export const FINAL_BOARD_ANIM = { type: "matrix", axis: "down" };
-export const FINAL_OUT_ANIM = { type: "edge", dir: "down" };
+// Pierwsze pojawienie się logo po intro (z pustego ekranu).
 export const LOGO_IN_ANIM = { type: "edge", dir: "up" };
-// control/js/display.js's hideLogo(): "LOGO HIDE ANIMOUT edge down" —
-// zejście logo PRZED wjazdem pierwszej planszy rund (control/js/gameRounds.js's
-// startRound(): `await display.hideLogo()` zawsze PRZED
-// roundsBoardPlaceholders(), nigdy równolegle).
-export const LOGO_OUT_ANIM = { type: "edge", dir: "down" };
