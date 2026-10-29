@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nZsozmGKd31gekzIdqkIdlpGfn7vNTUoDTB8SxRdMcGBYKCIysELAlIzEsJZ4Yi
+\restrict eoKNv6FUo0JZcmdaLkgeCZK4qlc7tBbU7tCQbhFFeCb3DJWc3m7IIzm8hNv5DNC
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -12227,7 +12227,13 @@ begin
   IF v_username IS NOT NULL AND v_username <> '' AND NOT v_is_guest AND (
        v_username !~ '^[a-zA-Z0-9_.-]{3,20}$'
        OR lower(v_username) LIKE 'guest\_%'
-       OR public.reserved_username_reason(v_username) IS NOT NULL
+       OR (public.reserved_username_reason(v_username) IS NOT NULL
+           -- jak profiles_reserve_test_username (460): e2e.<role><NN> tylko
+           -- dla adresu tej tożsamości testowej
+           AND NOT (public.reserved_username_reason(v_username) = 'test' AND EXISTS (
+             SELECT 1 FROM public.e2e_identities i
+             WHERE i.name = lower(btrim(v_username)) AND i.role IN ('standard','disposable','dedicated')
+               AND lower(new.email) IN (i.email, replace(i.email,'@','.new@')))))
        OR EXISTS (SELECT 1 FROM public.profiles p WHERE lower(p.username) = lower(v_username) AND p.id <> new.id)) THEN
     v_username := NULL;
   END IF;
@@ -27080,5 +27086,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nZsozmGKd31gekzIdqkIdlpGfn7vNTUoDTB8SxRdMcGBYKCIysELAlIzEsJZ4Yi
+\unrestrict eoKNv6FUo0JZcmdaLkgeCZK4qlc7tBbU7tCQbhFFeCb3DJWc3m7IIzm8hNv5DNC
 
