@@ -114,6 +114,13 @@ module.exports = [
 { ...H, id: "control-finale", category: "Rozgrywka", title: "Panel sterowania — finał", path: `/control/?id=${IDS.game}`, sources: page("control"), gameState: "finale", ready: "#app", devices: ["desktop"], settle: 1200 },
 { id: "control-devices", category: "Rozgrywka", title: "Panel sterowania — urządzenia", path: `/control/?id=${IDS.game}`, sources: page("control"), gameState: "devices", ready: ".device-row", devices: ["desktop"], settle: 1200 },
 { id: "control-summary", category: "Rozgrywka", title: "Panel sterowania — podsumowanie", path: `/control/?id=${IDS.game}`, sources: [...page("control"), "web/control/host/", "web/control/display/"], gameState: "summary", ready: ".c2-summary-display", devices: ["desktop"], settle: 2500 },
+// Zmiana głośności zapisuje ustawienia i przerysowuje ekran (uzgadnianie DOM):
+// wszystkie suwaki mają zostać złote do bieżącej wartości.
+{ id: "control-summary-volume", category: "Dodatkowe", title: "Panel sterowania — podsumowanie po zmianie głośności", path: `/control/?id=${IDS.game}`, sources: [...page("control"), "web/shared/js/core/range-fill.js"], gameState: "summary", ready: ".c2-summary-display", devices: ["desktop"], settle: 2500,
+    steps: [async (view) => {
+      await view.locator(".summarySoundVol").first().fill("40");
+      await view.waitForTimeout(800);
+    }] },
 { id: "control-round-armed", category: "Rozgrywka", title: "Panel sterowania — zaznaczony kafel (podpowiedź o drugim kliknięciu)", path: `/control/?id=${IDS.game}`, sources: page("control"), gameState: "round", ready: "#app", devices: ["desktop"], settle: 800,
     steps: [async (view) => { const tile = view.locator(".c2-tilegrid button.c2-tile:not([disabled])").first(); await tile.waitFor(); await tile.click(); await view.waitForSelector(".c2-tile-armed"); }] },
 { id: "control-round-display-hidden", category: "Rozgrywka", title: "Panel sterowania — Wyświetlacz w tle tej samej przeglądarki (ostrzeżenie nad podpowiedzią)", path: `/control/?id=${IDS.game}`, sources: page("control"), gameState: "round", ready: ".c2-hint-warn", devices: ["desktop"], settle: 800,

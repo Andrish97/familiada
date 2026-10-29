@@ -22,6 +22,7 @@ import { getSfxCategories, getSfxVariant, isSfxPlaying, playSfxPreview, stopSfxP
 import { buildDisplayPreviewRow } from "../../shared/js/gameplay/previewRow.js?v=v2026-10-29T15284";
 import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T15284";
 import { icon, iconText } from "../../shared/js/core/icons.js?v=v2026-10-29T15284";
+import { repaintRange } from "../../shared/js/core/range-fill.js?v=v2026-10-29T15284";
 
 import { previewPendingRoundEndDestination } from "./engine.js?v=v2026-10-29T15284";
 import { fitGameplayText, watchGameplayText } from "./fit-text.js?v=v2026-10-29T15284";
@@ -2039,6 +2040,9 @@ export function createUI({ root, emit }) {
       if (existing.checked !== fresh.checked) existing.checked = fresh.checked;
       // Preserve a locally typed value while its preceding writes are pending.
       if (document.activeElement !== existing && existing.value !== fresh.value) existing.value = fresh.value;
+      // Świeża kopia powstaje poza dokumentem, więc nie ma złotego wypełnienia
+      // z range-fill, a pętla wyżej zdjęła je z żywego suwaka razem z style.
+      repaintRange(existing);
       return;
     }
     const oldChildren = [...existing.childNodes], newChildren = [...fresh.childNodes];

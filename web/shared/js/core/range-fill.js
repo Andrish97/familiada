@@ -9,6 +9,12 @@ function paint(el) {
   el.style.setProperty("--track", `linear-gradient(to right, var(--accent) ${pct}%, var(--w-14) ${pct}%)`);
 }
 
+// Dla kodu, który przestawia suwak bez zdarzeń i bez zmiany atrybutów
+// (uzgadnianie DOM w Control zdejmuje atrybut style i ustawia samo .value).
+export function repaintRange(el) {
+  if (el.matches?.(SELECTOR)) paint(el);
+}
+
 function paintAll(root) {
   if (root.matches?.(SELECTOR)) paint(root);
   root.querySelectorAll?.(SELECTOR).forEach(paint);
