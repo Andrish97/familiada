@@ -84,7 +84,7 @@
     {
       "key": "reveal",
       "folder": "reveal",
-      "limitSec": 2,
+      "limitSec": 5,
       "sounds": [
         { "file": "classic.mp3?v=v2026-10-29T14064", "label": { "pl": "Klasyczny", "en": "Classic", "uk": "Класичний" } }
 
