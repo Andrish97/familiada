@@ -60,8 +60,8 @@ albo w drzewie folderów.
 
 **Przeciąganie.** Przeciągnij zaznaczenie na folder, aby je przenieść. Z wciśniętym Ctrl
 (na Macu Option) elementy zostaną skopiowane — folder razem z zawartością. Upuszczenie na pustym
-tle przenosi elementy do „Folderu głównego”. Przeciągnięcie na tag w lewym panelu przypisuje
-ten tag.
+tle listy przenosi elementy do bieżącego folderu, a na „Folder główny” w drzewie — do folderu
+głównego. Przeciągnięcie na tag w lewym panelu przypisuje ten tag.
 
 ![Kosz](zrzut:base-explorer-trash)
 
@@ -107,14 +107,16 @@ warunki danego rodzaju gry (→ 7.6):
 
 Wpisz tekst w pole „Szukaj...”. Serwis znajdzie pytania i foldery, których treść lub nazwa
 zawiera ten tekst (wielkość liter nie ma znaczenia; odpowiedzi nie są przeszukiwane).
-Wpisz `#nazwa_tagu`, aby dodać do wyszukiwania tag.
+Aby zawęzić wyniki do tagu, kliknij go w panelu „Tagi” — tekst i tagi działają razem.
 
-Gdy wyszukujesz albo filtrujesz po tagu, lista pokazuje wyniki z całej bazy, a nie zawartość
-folderu — w tym widoku nie można wklejać ani wycinać. Aby wrócić do folderów, wyczyść pole
-wyszukiwania albo odznacz tagi.
+Gdy wyszukujesz albo filtrujesz po tagu, lista pokazuje wyniki z bieżącego folderu i wszystkich
+jego podfolderów (w „Folderze głównym” — z całej bazy), a nie samą zawartość folderu. Folder,
+w którym pasują wszystkie pytania, widać w wynikach jako jeden folder. W tym widoku nie można
+tworzyć, wklejać ani duplikować elementów — wycięte lub skopiowane wkleisz po powrocie do folderów.
+Aby wrócić do folderów, wyczyść pole wyszukiwania albo odznacz tagi.
 
 ![Wyszukiwanie z tagiem](zrzut:base-explorer-search-filters)
-![Wyniki filtra w całej bazie](zrzut:base-explorer-filter)
+![Wyniki filtra](zrzut:base-explorer-filter)
 ![Wyszukiwanie na telefonie](zrzut:base-explorer-search-sheet@phone)
 
 ## 9.6 Skróty klawiszowe
@@ -174,4 +176,5 @@ Wybrany rodzaj gry decyduje, co zostanie przeniesione: ankieta tekstowa zachowa 
 punktacja — pytania i odpowiedzi bez punktów (punkty wynikną z ankiety), a gra preparowana —
 pytania, odpowiedzi i punkty.
 
-Gry nie utworzysz z bazy, do której masz dostęp tylko do odczytu (→ 12.4).
+Grę utworzysz także z bazy, do której masz dostęp tylko do odczytu — powstaje jako kopia pytań
+w Twoich grach, a baza zostaje bez zmian (→ 12.4).
