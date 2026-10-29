@@ -21,6 +21,7 @@ import { hidePageGuard, showPageGuard } from "./page-overlay.js?v=v2026-10-29T13
 
 import "./page-boot.js?v=v2026-10-29T13000";
 export const { getDeviceProfile, editableFocused, PHONE_MAX_SHORT_SIDE } = globalThis.FamilijnaDevice;
+const { keyboardLikely, KEYBOARD_CLOSE_MS } = globalThis.FamilijnaDevice;
 export const MIN_WORK_WIDTH = 980;
 export const MIN_WORK_HEIGHT = 580;
 export const TV_HD_RESOLUTION = Object.freeze({ width: 1280, height: 720 });
@@ -47,10 +48,11 @@ function phoneGuardState(state, profile) {
   return profile.formFactor === "phone" && (state === "screen" || state === "narrow" || state === "small") ? "unsupported" : state;
 }
 
-// Klawiatura ekranowa (dotyk + aktywne pole tekstowe) potrafi obniżyć
-// viewport; to nie jest za małe okno, więc wtedy wysokości nie sprawdzamy.
+// Klawiatura ekranowa (dotyk + aktywne pole tekstowe, także chwilę po utracie
+// fokusu, gdy się zamyka) potrafi obniżyć viewport; to nie jest za małe okno,
+// więc wtedy wysokości nie sprawdzamy.
 function virtualKeyboardLikely(profile) {
-  return profile.touch && editableFocused();
+  return profile.touch && keyboardLikely();
 }
 
 /** Poziomy viewport niższy niż próg strony (pion nie ma progu wysokości). */
@@ -195,9 +197,9 @@ export function guardViewportWidth({ minWidth = MIN_WORK_WIDTH, minHeight = 0, b
   window.addEventListener("resize", refresh);
   window.addEventListener("orientationchange", onOrientationChange);
   window.visualViewport?.addEventListener("resize", refresh, { passive: true });
-  // Po zamknięciu klawiatury ekranowej (utrata fokusu pola) próg wysokości
-  // znów obowiązuje.
-  if (minHeight > 0) document.addEventListener("focusout", () => setTimeout(refresh, 0));
+  // Po zamknięciu klawiatury ekranowej (utrata fokusu pola i czas na powrót
+  // okna do pełnej wysokości) próg wysokości i orientacja z okna znów obowiązują.
+  document.addEventListener("focusout", () => setTimeout(refresh, KEYBOARD_CLOSE_MS + 50));
   refresh();
 
   return { refresh, state: currentState, ready };

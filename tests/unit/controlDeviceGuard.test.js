@@ -5,10 +5,11 @@ import fs from 'node:fs';
 const source = fs.readFileSync(new URL('../../web/shared/js/core/device-guard.js', import.meta.url), 'utf8')
   .replace(/^import .*;$/gm, '')
   .replace(/export /g, '');
-const load = ({ screenWidth, screenHeight, width = screenWidth, height = screenHeight, touch = false, userAgent = '' }) => {
-  const api = new Function('window', 'navigator', `const globalThis = {}; ${fs.readFileSync(new URL('../../web/shared/js/core/page-boot.js', import.meta.url), 'utf8')}; ${source}; return {getDeviceProfile, deviceGuardState, isPhoneScreen, MIN_WORK_HEIGHT};`)(
+const load = ({ screenWidth, screenHeight, width = screenWidth, height = screenHeight, touch = false, userAgent = '', document = undefined }) => {
+  const api = new Function('window', 'navigator', 'document', `const globalThis = {}; ${fs.readFileSync(new URL('../../web/shared/js/core/page-boot.js', import.meta.url), 'utf8')}; ${source}; return {getDeviceProfile, deviceGuardState, isPhoneScreen, MIN_WORK_HEIGHT};`)(
     { innerWidth: width, innerHeight: height, screen: { width: screenWidth, height: screenHeight }, matchMedia: (query) => ({ matches: query.includes('hover') ? !touch : touch }) },
     { maxTouchPoints: touch ? 1 : 0, userAgent },
+    document,
   );
   return api;
 };
@@ -138,4 +139,18 @@ test('próg wysokości obowiązuje tylko w poziomie; telefon zachowuje dotychcza
   assert.equal(phone.deviceGuardState(0, { allowPhoneLandscape: true, minHeight: 580 }), 'rotate');
   // Strona wymagająca poziomu na telefonie: obrót nie pomoże -- niedostępne na telefonie.
   assert.equal(phone.deviceGuardState(0, { allowPhoneLandscape: true, requirePhoneLandscape: true, minHeight: 580 }), 'unsupported');
+});
+
+test('zamykanie klawiatury na tablecie w pionie nie miga „Obróć urządzenie”', () => {
+  const listeners = {};
+  const body = {};
+  const input = { tagName: 'INPUT', type: 'text' };
+  const documentElement = { dataset: {}, toggleAttribute() {}, classList: { contains: () => false } };
+  const document = { body, documentElement, readyState: 'complete', activeElement: body, addEventListener: (type, fn) => { listeners[type] = fn; } };
+  // Pole straciło fokus, a okno jest jeszcze obniżone przez klawiaturę.
+  const api = load({ screenWidth: 800, screenHeight: 1280, width: 800, height: 520, touch: true, document });
+  assert.equal(api.deviceGuardState(0, { minHeight: 580 }), 'rotate', 'bez utraty fokusu pola to zwykłe niskie okno');
+  listeners.focusout({ target: input });
+  assert.equal(api.getDeviceProfile().orientation, 'portrait');
+  assert.equal(api.deviceGuardState(0, { minHeight: 580 }), 'ok');
 });
