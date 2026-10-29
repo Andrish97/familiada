@@ -439,8 +439,9 @@ export function animateClose(overlay, done) {
     clearTimeout(timer);
     target.removeEventListener("animationend", onEnd);
     for (const fn of dones) fn();
-    overlay.classList.remove("sheet-closing", "is-closing");
+    overlay.classList.remove("sheet-closing", "is-closing", "sheet-keyboard");
     overlay.style.removeProperty("--sheet-drag");
+    overlay.style.removeProperty("--sheet-keyboard");
   }
   closing.set(overlay, { finish, dones });
   target.addEventListener("animationend", onEnd);
@@ -494,7 +495,8 @@ function enterModalSheet(overlayEl, { onClose, onBack, historyKey = overlayEl?.i
     overlayEl.addEventListener("scroll", () => { if (overlayEl.scrollTop) overlayEl.scrollTop = 0; });
   }
   overlayEl?.style.removeProperty("--sheet-drag");
-  overlayEl?.classList.remove("sheet-closing", "sheet-dragging", "sheet-settling");
+  overlayEl?.style.removeProperty("--sheet-keyboard");
+  overlayEl?.classList.remove("sheet-closing", "sheet-dragging", "sheet-settling", "sheet-keyboard");
   applyPresentation(true);
   fitSheetTop(overlayEl);
   requestAnimationFrame(() => { if (activeOverlay === overlayEl) fitSheetTop(overlayEl); });
