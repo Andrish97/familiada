@@ -3,17 +3,17 @@
 // Lewy panel -- wynik, prawy -- rekord, górny -- tempo; long1/long2 -- podpisy.
 // Zdarzenia (enter/start/finish) trafiają do statystyk admina (snake-log.js);
 // zalogowanym baza zapisuje rekord i liczbę gier.
-import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-29T16322";
-import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-29T16322";
-import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T16322";
-import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-29T16322";
-import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-29T16322";
-import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-29T16322";
-import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-29T16322";
-import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-29T16322";
-import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-29T16322";
-import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-29T16322";
-import { initFullscreenButton } from "../../shared/js/core/fullscreen.js?v=v2026-10-29T16322";
+import { initI18n, t, getUiLang } from "../../shared/translation/translation.js?v=v2026-10-29T17240";
+import { hydrateIcons } from "../../shared/js/core/icons.js?v=v2026-10-29T17240";
+import { guardViewportWidth } from "../../shared/js/core/device-guard.js?v=v2026-10-29T17240";
+import { getUser } from "../../shared/js/core/auth.js?v=v2026-10-29T17240";
+import { logSnake } from "../../shared/js/core/snake-log.js?v=v2026-10-29T17240";
+import { loadJson, buildGlyphMap, resolveGlyph } from "../../shared/js/display/fonts.js?v=v2026-10-29T17240";
+import { layoutLongText, LONG_COLS, LONG_GAP } from "../../shared/js/display/long-text.js?v=v2026-10-29T17240";
+import { createDisplays } from "../../shared/js/display/displays.js?v=v2026-10-29T17240";
+import { createThemeManager } from "../../shared/js/display/theme_manager.js?v=v2026-10-29T17240";
+import { createSnakeGame, stepDelay } from "./snake-game.js?v=v2026-10-29T17240";
+import { initFullscreenButton } from "../../shared/js/core/fullscreen.js?v=v2026-10-29T17240";
 
 const OFF = "#2e2e32";
 const LIT = "#d7ff3d";
