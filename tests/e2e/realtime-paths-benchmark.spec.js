@@ -53,11 +53,13 @@ async function startDevice(page, { gid, key, type }) {
     });
     if (regError || reg?.state !== "primary") throw regError || new Error(`${type} not primary`);
     const lease = { p_connection_id: connectionId, p_epoch: reg.epoch };
+    // Builder supabase-js wysyła żądanie dopiero przy then/await — samo
+    // „void sb.rpc(...)” nie wysyłało heartbeatu i lease wygasał po 12 s.
     window.__benchHeartbeat = setInterval(() => {
-      void sb.rpc("control_device_instance_heartbeat", {
+      sb.rpc("control_device_instance_heartbeat", {
         p_game_id: gid, p_device_type: type, p_key: key, ...lease,
         p_meta: { visibility: "visible", focused: true },
-      });
+      }).then(({ error }) => { if (error) bench.errors.push(`heartbeat:${error.message}`); }, () => {});
     }, 3000);
 
     let reading = false, pending = false;
