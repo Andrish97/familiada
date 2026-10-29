@@ -8,6 +8,11 @@ test.use({ serviceWorkers: "block" });
 // E25: konto wypożyczane na worker (tests/README.md „Test accounts”).
 test.use({ needs: { standard: 1 } });
 
+// Na produkcji treść Wskazówek przychodzi gotowa z Workera i odnośniki da się
+// kliknąć, zanim manual.js je przechwyci (wtedy działają jak zwykłe linki, bez
+// from=). Testy zachowania JS czekają na gotowość strony.
+const manualReady = (page) => expect(page.locator("html")).toHaveAttribute("data-manual-ready", "true");
+
 test.beforeEach(async ({ context }) => {
   if (process.env.TEST_BRANCH_CODE !== "0") await serveBranchCode(context, { pages: ["privacy", "manual"] });
 });
@@ -130,6 +135,7 @@ test("manual: spis treści (części → rozdziały) w PL/EN/UK, bez ?modal=", a
 test("manual: rozdział w ?ch= (replaceState), podrozdział w #s-…, odnośnik → i poprzedni/następny", async ({ page, context, accounts, loginAs }, testInfo) => {
   await loginAs(page, context, accounts.standard[0]);
   await page.goto(`${ORIGIN}/manual/?lang=pl`, { waitUntil: "domcontentloaded" });
+  await manualReady(page);
   const historyBefore = await page.evaluate(() => history.length);
 
   await page.locator('#manualToc a.m-side-item[data-ch="6"]').first().click();
@@ -326,6 +332,7 @@ test("manual: telefon — podgląd zrzutu: pole przybliżania wypełnia okno, ob
 test("manual: telefon — „Wróć do: …” w pasku ze „Spis treści” po odnośniku w treści", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${ORIGIN}/manual/?lang=pl&ch=6`, { waitUntil: "domcontentloaded" });
+  await manualReady(page);
   await page.locator('.m-doc a.m-ref[href*="ch=7"][href$="#s-7-1"]').first().click();
   await expect(page.locator(".m-article h1")).toContainText("Tworzenie i edycja gry");
   const back = page.locator("#manualReturnBar");
