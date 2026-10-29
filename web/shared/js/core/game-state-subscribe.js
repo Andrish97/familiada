@@ -20,6 +20,7 @@ import { realtimeSocketCloseDetails, observeRealtimeSocketClose } from "./realti
 import { createDirectRetryScheduler } from "./direct-retry-backoff.js?v=v2026-10-29T13443";
 
 const TRANSPORT = "broadcast";
+const NOT_RESYNC_SOURCES = new Set([TRANSPORT, "rpc_bootstrap", "press"]);
 
 export function createSubscription({ gameId, deviceType, key, onRow, onError, onCompletion = null, signal = false, sameRevChanged = null, getLeaseArgs = () => ({}), beforeResync = null, log = () => {} }) {
   let active = false;
@@ -140,8 +141,10 @@ export function createSubscription({ gameId, deviceType, key, onRow, onError, on
     }
     lastRenderedRev = Math.max(lastRenderedRev, Number(row.rev) || 0);
     // Odczyt po (ponownym) dołączeniu przyniósł nowszy stan: urządzenie
-    // przegapiło zmiany, gdy było odłączone.
-    if (source !== TRANSPORT && source !== "rpc_bootstrap" && previousRev >= 0 && Number(row.rev) > previousRev) {
+    // przegapiło zmiany, gdy było odłączone. Wynik własnego zapisu urządzenia
+    // (naciśnięcie Przycisku) bywa szybszy niż ta sama zmiana z kanału —
+    // to nie nadrobienie (e2e 40884933127).
+    if (!NOT_RESYNC_SOURCES.has(source) && previousRev >= 0 && Number(row.rev) > previousRev) {
       if (outage) {
         outage.catchupCount += 1;
         outage.missedRevisions += Math.max(1, Number(row.rev) - previousRev);
