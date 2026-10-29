@@ -124,7 +124,7 @@ test("usuwanie gry: dozwolone przy otwartej ankiecie (poll_open) — okno ostrze
     await card.locator(".x").click({ timeout: 10000 });
     // E12 (migracja 312): otwarta ankieta nie blokuje usunięcia — okno
     // potwierdzenia mówi, że zostanie przerwana.
-    await expect(page.locator(".uni-modal .mSub")).toContainText("Ankieta zostanie przerwana", { timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub", { hasText: "Ankieta zostanie przerwana" })).toBeVisible({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 }); // potwierdź "Usuń"
 
     await expect(card).toHaveCount(0, { timeout: 15000 });
@@ -163,7 +163,7 @@ test("usuwanie gry: zablokowane, gdy edytor jest otwarty w innej karcie", async 
     await card.locator(".x").click({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold:visible").click({ timeout: 10000 });
 
-    await expect(page.locator(".uni-modal .mSub")).toContainText("innej karcie", { timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub", { hasText: "innej karcie" })).toBeVisible({ timeout: 10000 });
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
 
     expect(await gameExists(page, gameId), "gra otwarta w edytorze w innej karcie nie powinna zostać usunięta").toBe(true);
@@ -259,7 +259,7 @@ test("usuwanie logo: zablokowane, gdy używająca go gra ma teraz otwarte ustawi
     // niejednoznaczny. .uni-modal .mSub celuje tylko w dynamiczny modal
     // core/modal.js (confirmModal/alertModal). Komunikat od kroku 4 dotyczy
     // już całej puli logo ("ustawienia gry"), nie tylko referencji.
-    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia gry", { timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub", { hasText: "ustawienia gry" })).toBeVisible({ timeout: 10000 });
     await page.locator(".uni-modal .uni-foot .btn.gold").click({ timeout: 10000 }); // zamknij alert blokady
 
     expect(await logoExists(page, logoId), "logo używane przez grę z otwartymi ustawieniami nie powinno zostać usunięte").toBe(true);
@@ -578,8 +578,8 @@ test("games.js: zmiana nazwy gry zablokowana alert-modalem, gdy gra jest edytowa
 
     // Okno zmiany nazwy trzyma game:G wyłącznie (migracja 313) -- zajęta gra
     // nie pozwala nawet otworzyć okna: komunikat zamiast okna nazwy.
-    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub").last()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub", { hasText: "otwarta gdzie indziej" })).toBeVisible({ timeout: 5000 });
     await expect(page.locator(".uni-modal:has(.uni-inp)")).toHaveCount(0); // okno nazwy się nie otworzyło
     await page.locator(".uni-foot .btn.gold:visible").click();
 
@@ -625,11 +625,11 @@ test("games.js: reset gry do draftu po ankiecie zablokowany alert-modalem, gdy g
     // game_validate().edit ma needs_reset dla poll_text/ready -- najpierw
     // confirmModal "na pewno zresetować", dopiero potem (po OK) trafiamy w
     // sprawdzenie busy wewnątrz resetPollForEditing().
-    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub").last()).toBeVisible({ timeout: 10000 });
     await page.locator(".uni-foot .btn.gold:visible").click();
 
-    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub").last()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub", { hasText: "otwarta gdzie indziej" })).toBeVisible({ timeout: 5000 });
     await page.locator(".uni-foot .btn.gold:visible").click();
 
     await expect(page).toHaveURL(/\/games\/?(?:\?[^\/]*)?$/, { timeout: 5000 });
@@ -678,8 +678,8 @@ test("games.js: eksport gry zablokowany alert-modalem, gdy gra jest edytowana gd
     await expect(page.locator("#btnExport")).toBeEnabled({ timeout: 10000 });
     await page.locator("#btnExport").click();
 
-    await expect(page.locator(".uni-modal .mSub")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator(".uni-modal .mSub")).toContainText("otwarta gdzie indziej", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub").last()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".uni-modal .mSub", { hasText: "otwarta gdzie indziej" })).toBeVisible({ timeout: 5000 });
     // Eksport nigdy się nie zaczął -- overlay postępu eksportu nie mógł się pokazać.
     await expect(page.locator(".uni-modal:has(.uni-progress)")).toBeHidden();
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
@@ -801,7 +801,7 @@ test("edytor logo: edycja i zmiana nazwy DOWOLNEGO logo zablokowane, gdy game-se
     // Okno zmiany nazwy trzyma logo:L wyłącznie -- przy trzymanym `logos`
     // (ustawienia gry) okno się nie otwiera, jest alert-modal z powodem.
     await tile.dblclick();
-    await expect(page.locator(".uni-modal .mSub")).toContainText("ustawienia gry", { timeout: 5000 });
+    await expect(page.locator(".uni-modal .mSub", { hasText: "ustawienia gry" })).toBeVisible({ timeout: 5000 });
     await expect(page.locator(".uni-modal:has(.uni-inp)")).toHaveCount(0); // okno nazwy się nie otworzyło
     await page.locator(".uni-modal .uni-foot .btn.gold").click();
 
