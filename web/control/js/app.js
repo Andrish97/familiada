@@ -1,4 +1,4 @@
-import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-29T14180";
+import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompletion.js?v=v2026-10-29T15205";
 
 // control/js/app.js
 // Punkt wejścia Control v2 — spina store/engine/devices/presence/
@@ -8,19 +8,20 @@ import { createRenderCompletionGate } from "../../shared/js/gameplay/renderCompl
 // engine.js) — ale i tak przechodzi przez assertTransition(), żeby tabela
 // stanów była mechanizmem wszędzie, nie tylko wewnątrz silnika reguł gry.
 
-import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-29T14180";
-import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-29T14180";
-import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-29T14180";
-import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-29T14180";
-import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-29T14180";
-import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T14180";
-import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-29T14180";
-import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-29T14180";
-import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-29T14180";
-import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-29T14180";
-import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T14180";
-import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T14180";
-import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-29T14180";
+import { guardResourceLocks } from "../../shared/js/core/resource-lock.js?v=v2026-10-29T15205";
+import { openDialog, closeDialog } from "../../shared/js/core/modal-sheet.js?v=v2026-10-29T15205";
+import { initI18n, getUiLang, t } from "../../shared/translation/translation.js?v=v2026-10-29T15205";
+import { backHref, linkTo } from "../../shared/js/core/nav-map.js?v=v2026-10-29T15205";
+import { initPage } from "../../shared/js/core/page-init.js?v=v2026-10-29T15205";
+import { sb } from "../../shared/js/core/supabase.js?v=v2026-10-29T15205";
+import { loadQuestions, loadAnswers, guardGameState } from "../../shared/js/core/game-validate.js?v=v2026-10-29T15205";
+import { loadSfxManifest, initSfx, setCurrentGameId, unlockAudio, applySfxGameSettings, loadSfxFromCloud, playSfx, getSfxDurationAccurate as getSfxDuration, listSfx, isAnySfxPlaying, onSfxPlayback } from "../../shared/js/core/sfx.js?v=v2026-10-29T15205";
+import { listGameSounds } from "../../shared/js/core/sfx-cloud.js?v=v2026-10-29T15205";
+import { assertTransition } from "../../shared/js/gameplay/gameStateMachine.js?v=v2026-10-29T15205";
+import { alertModal, confirmModal } from "../../shared/js/core/modal.js?v=v2026-10-29T15205";
+import { DEFAULT_SETTINGS } from "../../shared/js/gameplay/gameStateShape.js?v=v2026-10-29T15205";
+import { ROUND_ANSWER_TOTAL_MS, FINAL_ANSWER_TOTAL_MS, BOARD_OUT_MS, BOARD_IN_MS, LOGO_IN_MS } from "../../shared/js/gameplay/displayTiming.js?v=v2026-10-29T15205";
+import { qrDataUrl } from "../../shared/js/core/qr-code.js?v=v2026-10-29T15205";
 
 // QR generowany lokalnie i od razu (SVG w data:), bez zewnętrznego API:
 // wcześniej przez chwilę widać było samą białą ramkę <img>.
@@ -110,22 +111,22 @@ function applyGameSettingsToState(settings, state) {
   }
 }
 
-import { createStore } from "./store.js?v=v2026-10-29T14180";
-import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-29T14180";
-import { createEngine } from "./engine.js?v=v2026-10-29T14180";
-import { createActionGate } from "./actionGate.js?v=v2026-10-29T14180";
-import { createDevices } from "./devices.js?v=v2026-10-29T14180";
-import { createPresence } from "./presence.js?v=v2026-10-29T14180";
-import { missingDevices, blockingDevices, absenceCause } from "./deviceGate.js?v=v2026-10-29T14180";
-import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-29T14180";
-import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-29T14180";
-import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-29T14180";
-import { createSoundReactor } from "./soundReactor.js?v=v2026-10-29T14180";
-import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-29T14180";
-import { createUI } from "./ui.js?v=v2026-10-29T14180";
-import { createShareDevice } from "./shareDevice.js?v=v2026-10-29T14180";
-import { icon } from "../../shared/js/core/icons.js?v=v2026-10-29T14180";
-import { toast } from "../../shared/js/core/toast.js?v=v2026-10-29T14180";
+import { createStore } from "./store.js?v=v2026-10-29T15205";
+import { createRuntimeSession } from "./runtimeSession.js?v=v2026-10-29T15205";
+import { createEngine } from "./engine.js?v=v2026-10-29T15205";
+import { createActionGate } from "./actionGate.js?v=v2026-10-29T15205";
+import { createDevices } from "./devices.js?v=v2026-10-29T15205";
+import { createPresence } from "./presence.js?v=v2026-10-29T15205";
+import { missingDevices, blockingDevices, absenceCause } from "./deviceGate.js?v=v2026-10-29T15205";
+import { createSessionTelemetry } from "./sessionTelemetry.js?v=v2026-10-29T15205";
+import { createConnectivityIncidentTracker } from "./diagnostics.js?v=v2026-10-29T15205";
+import { compareBrowserContexts, getGameBrowserContextId } from "../../shared/js/core/device-context.js?v=v2026-10-29T15205";
+import { createSoundReactor } from "./soundReactor.js?v=v2026-10-29T15205";
+import { createControlTestMode, currentControlGeometry } from "./testMode.js?v=v2026-10-29T15205";
+import { createUI } from "./ui.js?v=v2026-10-29T15205";
+import { createShareDevice } from "./shareDevice.js?v=v2026-10-29T15205";
+import { icon } from "../../shared/js/core/icons.js?v=v2026-10-29T15205";
+import { toast } from "../../shared/js/core/toast.js?v=v2026-10-29T15205";
 
 async function pickQuestionPool(state) {
   const all = await loadQuestions(state.gameId);
@@ -515,16 +516,24 @@ async function main() {
   let previousDisplayRow = store.state.__row || null;
   let lastDisplayCueSeq = store.state.__row?.sound_cue_seq;
   let lastDisplayStep = store.state.step;
+  // Dźwięk wyznacza start animacji, a jej długość stałe z displayTiming.js
+  // (Wyświetlacz liczy z tych samych) — oczekiwany czas to dłuższe z obu.
   async function expectedDisplayTransitionMs(previous, row) {
     const key = row?.sound_cue_key;
     if (!key) return null;
-    if (key === "round_transition") return actionGate.timing.syncedMs("round_transition", "reveal");
-    if (key === "show_intro") return actionGate.timing.syncedMs("show_intro", "reveal");
+    const timing = actionGate.timing;
+    const afterReveal = async (otherKey, animMs) => Math.max(
+      await timing.syncedMs(otherKey, "reveal"),
+      (await timing.revealSyncSplit(otherKey)).offsetMs + animMs);
+    const boardMs = BOARD_OUT_MS + Math.max(BOARD_IN_MS, LOGO_IN_MS);
+    if (key === "round_transition") return afterReveal("round_transition", boardMs);
+    if (key === "show_intro") return afterReveal("show_intro", LOGO_IN_MS);
     if (key === "final_theme" && previous?.step === "f_start" && row.step === "f_p1_entry") {
-      return (await actionGate.timing.dur("final_theme")) + await actionGate.timing.syncedMs("round_transition", "reveal");
+      return (await timing.dur("final_theme")) + await afterReveal("round_transition", boardMs);
     }
-    if (key === "final_theme" && row.step === "f_end") return actionGate.timing.syncedMs("final_theme", "reveal");
-    return actionGate.timing.dur(key);
+    if (key === "final_theme" && row.step === "f_end") return afterReveal("final_theme", boardMs);
+    const answerMs = row.top_card === "final" ? FINAL_ANSWER_TOTAL_MS : ROUND_ANSWER_TOTAL_MS;
+    return Math.max(await timing.dur(key), answerMs);
   }
   function evaluateDisplayCompletion(revision, item) {
     if (item.timedOut && !item.lateReported && item.completedAt != null) {

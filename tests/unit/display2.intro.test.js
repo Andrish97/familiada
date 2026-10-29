@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRenderer } from "../../web/control/display/js/render.js";
 import { makeDefaultState } from "../../web/shared/js/gameplay/gameStateShape.js";
+import { LOGO_IN_MS, LOGO_OUT_MS, BOARD_IN_MS } from "../../web/shared/js/gameplay/displayTiming.js";
 
 function stateToRow(state) {
   return { step: state.step, phase: state.phase, top_card: state.topCard, detail: structuredClone(state) };
@@ -37,7 +38,8 @@ test("Display stays blank before Start game; the logo enters with reveal near th
   const logo = calls.find((call) => call.name === "logo.show");
   assert.ok(logo);
   assert.ok(logo.at - start >= 35);
-  assert.equal(logo.args[0].ms, 20);
+  // Start z dźwiękiem reveal, długość stała (displayTiming.js, decyzja 2026-10-29).
+  assert.equal(logo.args[0].ms, LOGO_IN_MS);
 });
 
 test("Reconnect after intro restores logo rather than an empty round board", async () => {
@@ -147,7 +149,7 @@ test("pregame names and a reconnect before the first round both keep score panel
   for (const name of ["small.leftDigits", "small.rightDigits"]) assert.equal(calls.findLast(call => call.name === name).args[0], "");
 });
 
-test("round board disappearance and appearance each use half of reveal", async () => {
+test("round board: logo leaves, then the board enters, with fixed durations", async () => {
   const { renderer, calls, state } = setup();
   state.step = "r_roundStart";
   state.rounds.roundNo = 1;
@@ -159,8 +161,8 @@ test("round board disappearance and appearance each use half of reveal", async (
   await renderer.renderDiff(before, after);
   const out = calls.find(c => c.name === "logo.hide");
   const into = calls.find(c => c.name === "rounds.setAll");
-  assert.equal(out.args[0].ms, 10);
-  assert.equal(into.args[0].animIn.ms, 10);
+  assert.equal(out.args[0].ms, LOGO_OUT_MS);
+  assert.equal(into.args[0].animIn.ms, BOARD_IN_MS);
   assert.ok(calls.indexOf(out) < calls.indexOf(into));
 });
 

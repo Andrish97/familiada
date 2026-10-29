@@ -324,12 +324,15 @@
   .topbar .btn,
   .topbar .who,
   .topbar .dotRow { height: var(--topbar-ctl-h); }
-  /* <a class="btn"> nie centruje zawartości w pionie sam z siebie */
+  /* <a class="btn"> nie centruje zawartości w pionie sam z siebie i dziedziczy
+     czcionkę strony (16px) — w topbarze ma wyglądać jak <button class="btn">
+     (domyślna czcionka przycisku przeglądarki, 13.333px). */
   .topbar a.btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: .35em;
+    font-size: 13.3333px;
   }
   .user-btn {
     display: inline-flex;
