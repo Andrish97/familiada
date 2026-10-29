@@ -74,6 +74,39 @@ def is_promising_source(content, lang, enrich=False):
     return True
 
 
+def focus_text(content, limit=12000, after=14):
+    """Tylko fragmenty strony wokół pytań (linia ze znakiem zapytania i kilka
+    kolejnych linii z odpowiedziami), w kolejności strony, do limitu znaków.
+    Bez pytań — początek strony jak dotąd. Fragmenty to ciągłe kawałki treści."""
+    lines = str(content or '').split('\n')
+    scored = [bool(re.search(r'(?<!\d)(?:[1-9]\d?|100)(?!\d)', line)) for line in lines]
+    ranges = []
+    for i, line in enumerate(lines):
+        # Pytanie: znak zapytania albo linia bez liczb, po której są >= 3 linie z punktami.
+        if '?' in line or (len(line) > 15 and not scored[i] and sum(scored[i + 1:i + 9]) >= 3):
+            start, end = max(0, i - 1), min(len(lines), i + after + 1)
+            if ranges and start <= ranges[-1][1]:
+                ranges[-1][1] = max(ranges[-1][1], end)
+            else:
+                ranges.append([start, end])
+    if not ranges:
+        return str(content or '')[:limit]
+    out, size = [], 0
+    for start, end in ranges:
+        part = '\n'.join(lines[start:end])
+        if size + len(part) > limit:
+            part = part[:max(0, limit - size)]
+        if part:
+            out.append(part)
+            size += len(part) + 2
+        if size >= limit:
+            break
+    return '\n\n'.join(out)
+
+
+IDLE_LIMIT = 25  # pustych prób przypominania z rzędu, po których zlecenie się wstrzymuje
+
+
 def compact(value):
     return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
 
@@ -146,7 +179,12 @@ def validate_question(raw, lang, kind, source=None, enrich=False):
         return None
     evidence = str(raw.get('evidence') or '').strip()
     if kind == 'search':
-        if not source or len(evidence) < 8 or evidence not in source['content']:
+        if not source:
+            return None
+        if not evidence:
+            # Dowód z treści strony wyznacza kod (AI nie przepisuje cytatu — mniej tokenów).
+            evidence = evidence_window(source['content'], text, 900) or ''
+        if len(evidence) < 8 or (evidence not in source['content'] and evidence not in ' '.join(source['content'].split())):
             return None
         # Dowód musi zawierać treść każdej odpowiedzi i każdą liczbę.
         evidence_norm = norm(evidence)
@@ -280,22 +318,24 @@ class QuestionBank:
 
     async def recall(self, job, seen):
         """Krótka prośba do DeepSeeka o znane pytania ankietowe — bez źródeł stron w prompcie."""
-        recent = await self.db.select('producer_question_pool', {'lang': 'eq.' + job['lang'], 'select': 'text', 'order': 'created_at.desc', 'limit': 40}) or []
-        avoid = list(dict.fromkeys([r['text'] for r in recent] + seen[-60:]))
-        result = await self.ask('List up to 6 survey questions in ' + LANGUAGES[job['lang']] + ' that were really used in the TV show '
+        # Powtórzenia odsiewa drop_known (bez AI); lista do pominięcia tylko kieruje
+        # DeepSeeka — krótka, bo to największa stała część kosztu prośby.
+        recent = await self.db.select('producer_question_pool', {'lang': 'eq.' + job['lang'], 'select': 'text', 'order': 'created_at.desc', 'limit': 15}) or []
+        avoid = list(dict.fromkeys([r['text'] for r in recent] + seen[-25:]))
+        result = await self.ask('List up to 10 survey questions in ' + LANGUAGES[job['lang']] + ' that were really used in the TV show '
             + {'pl': '"Familiada"', 'en': '"Family Feud"', 'uk': '"Сто к одному" or Ukrainian "Family Feud"'}[job['lang']]
             + ' or published as its survey questions (fan sites, quizzes, transcripts). Category (empty means varied): ' + compact(job['category']) + '. '
             'Give the exact wording as it is commonly published, so it can be found with an exact-phrase web search. '
             'Each question: 3–6 short distinct answers (max 17 characters) with the points you remember, ordered from most popular. '
             'Question max 100 characters. No trivia with one correct answer. Natural sentence case, never ALL-CAPS. '
             'Do not repeat or paraphrase any of these: ' + compact(avoid) + '. '
-            'Return {"questions":[{"text":"...","category_hint":"approximate subject","answers":[{"text":"...","fixed_points":35}]}]}.', 1800)
+            'Return {"questions":[{"text":"...","category_hint":"approximate subject","answers":[{"text":"...","fixed_points":35}]}]}.', 2600)
         raw = result.get('questions', [])
         if not isinstance(raw, list):
             raise ProviderUnavailable('Zły format propozycji pytań.')
         seen_norm = set(seen) | {norm(t) for t in avoid}
         out = []
-        for item in raw[:6]:
+        for item in raw[:10]:
             q = validate_question(item, job['lang'], 'generated')
             if q and norm(q['text']) not in seen_norm:
                 seen_norm.add(norm(q['text']))
@@ -361,18 +401,17 @@ class QuestionBank:
                 'Focus exclusively on Family Feud / survey questions with multiple respondent answers (e.g. "Name something...", "What do people do when..."). '
                 'Reject single-correct-answer trivia, general knowledge tests or facts with 1 answer. Preserve question text, but ALWAYS fix ALL-CAPS uppercase screaming questions or answers to natural sentence case (e.g. "WYGLĄDASZ..." -> "Wyglądasz..."). '
                 'You may create or improve missing answer groups (max 17 characters each) and estimate sensible integer points (sum 90–100, 3–6 distinct short answers, descending order). '
-                'Do not pretend estimated answers or points are original or a real survey. Evidence must be an EXACT substring containing the question. '
+                'Do not pretend estimated answers or points are original or a real survey. Copy the question text exactly as written in the source. '
                 if job.get('enrich') else 'Extract up to 8 complete survey questions in ' + LANGUAGES[job['lang']] + ' FROM THE FOLLOWING SOURCE ONLY. '
                 'Category requested (if specified): ' + compact(job['category']) + '. '
                 'Focus exclusively on survey questions with multiple popular answers and points. Reject trivia/facts with only 1 correct answer. '
                 'Preserve question text, answers and numeric points, but ALWAYS fix ALL-CAPS uppercase screaming questions or answers to natural sentence case (e.g. "WYGLĄDASZ..." -> "Wyglądasz..."). '
-                'Omit incomplete questions without numeric points. '
-                'For every question include evidence: an EXACT continuous substring of source containing its question, all answers and numeric points. ')
+                'Omit incomplete questions without numeric points. Copy question and answer texts exactly as written in the source. ')
             result = await self.ask(instruction +
                 'Source kind: say published_material unless a real survey is explicitly documented. '
                 'Return {"questions":[{"text":"exact source question","category_hint":"approximate subject","source_kind":"published_material",'
-                '"answers":[{"text":"exact answer","fixed_points":35}],"evidence":"exact source substring"}]}. '
-                'Untrusted source data follows:\n' + source['content'][:12000], 3000)
+                '"answers":[{"text":"exact answer","fixed_points":35}]}]}. '
+                'Untrusted source data follows (fragments around questions):\n' + focus_text(source['content']), 2000)
             raw = result.get('questions', [])
             if not isinstance(raw, list):
                 raise ProviderUnavailable('Zły format ekstrakcji źródła.')
@@ -408,6 +447,7 @@ class QuestionBank:
                 # prawdziwej stronie (dokładna fraza w SearXNG, bez AI). Strona, która
                 # potwierdziła pytanie, trafia do kolejki pełnego odczytu przez AI.
                 memory = [item for item in state['queries'] if isinstance(item, dict) and ('url' in item or 'seen' in item)]
+                idle = next((item['idle'] for item in state['queries'] if isinstance(item, dict) and isinstance(item.get('idle'), int)), 0)
                 pages = [item for item in memory if 'url' in item]
                 if pages:
                     page = pages[0]
@@ -434,10 +474,17 @@ class QuestionBank:
                     memory.extend({'url': url} for url in found_pages if url not in known)
                     state['message'] = (f'Sprawdzono {len(proposals)} propozycji DeepSeeka, ze źródłem: {len(candidates)}.'
                                         if proposals else 'DeepSeek nie zaproponował nowych pytań; spróbuję ponownie.')
-                    if not candidates:
-                        state['delay'] = 20
+                    # Puste próby z rzędu: coraz rzadziej, po IDLE_LIMIT wstrzymanie — DeepSeek
+                    # nie zna już nowych pytań, dalsze prośby tylko zużywają budżet.
+                    idle = 0 if candidates or found_pages else idle + 1
+                    if idle >= IDLE_LIMIT:
+                        state.update(status='paused', delay=60, message=f'{IDLE_LIMIT} prób z rzędu bez nowego pytania ze źródłem — wstrzymane, żeby nie zużywać budżetu AI. Zmień kategorię albo wybierz tryb generowania; „Wznów” spróbuje ponownie.')
+                        idle = 0
+                        await self.note(job['lang'], state['message'], 'warning', job['id'])
+                    elif not candidates:
+                        state['delay'] = min(900, 20 * 2 ** min(idle, 6))
                 pages_left = [item for item in memory if 'url' in item][:30]
-                state['queries'] = [item for item in memory if 'seen' in item][-200:] + pages_left
+                state['queries'] = [item for item in memory if 'seen' in item][-200:] + pages_left + [{'idle': idle}]
                 state['cursor'] = 0
             accepted = await self.review(candidates, job['category'], job['lang'])
             state['rejected'] += len(candidates) - len(accepted)

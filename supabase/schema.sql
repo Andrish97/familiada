@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AD1RfeQVK7C8lW6uqQE3nEBI6R2eTkkdPuIhcYOSc5T1mf4ZVYtU8zEusLkigyW
+\restrict fgjFuZVnGA9raJAxJAPBV5MIo3vJuaLy6j9Cj9SJhDDAzyEhp6Waacijg4S1P5K
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
@@ -846,6 +846,45 @@ $$;
 
 
 --
+-- Name: _control_broadcast("uuid", "text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_control_broadcast"("p_game_id" "uuid", "p_event" "text", "p_payload" "jsonb") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_target record;
+BEGIN
+  IF to_regprocedure('realtime.send(jsonb,text,text,boolean)') IS NULL THEN RETURN; END IF;
+  FOR v_target IN
+    SELECT slot.primary_connection_id AS connection_id
+    FROM public.control_runtime_sessions s
+    JOIN public.control_device_slots slot ON slot.session_id = s.id
+    WHERE s.game_id = p_game_id AND s.device_protocol = 2
+      AND s.ended_at IS NULL AND s.expires_at > clock_timestamp()
+      AND slot.game_id = p_game_id
+      AND slot.primary_connection_id IS NOT NULL
+      AND slot.lease_expires_at > clock_timestamp()
+  LOOP
+    BEGIN
+      PERFORM realtime.send(p_payload, p_event, format('game-state:%s:%s', p_game_id, v_target.connection_id), true);
+    EXCEPTION WHEN OTHERS THEN
+      RAISE WARNING 'control broadcast (device) failed: %', SQLSTATE;
+    END;
+  END LOOP;
+  BEGIN
+    PERFORM realtime.send(p_payload, p_event, format('game-control:%s', p_game_id), true);
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'control broadcast (control) failed: %', SQLSTATE;
+  END;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'control broadcast skipped: %', SQLSTATE;
+END;
+$$;
+
+
+--
 -- Name: _control_device_action_valid("uuid", "text", "text", "uuid", bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1390,6 +1429,21 @@ END $$;
 
 
 --
+-- Name: _display_completion_broadcast(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."_display_completion_broadcast"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+BEGIN
+  PERFORM public._control_broadcast(NEW.game_id, 'completion', jsonb_build_object('row', to_jsonb(NEW)));
+  RETURN NULL;
+END;
+$$;
+
+
+--
 -- Name: _display_is_default("jsonb"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1865,36 +1919,8 @@ CREATE FUNCTION "public"."_game_state_broadcast_devices"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'pg_temp'
     AS $$
-DECLARE
-  v_target record;
 BEGIN
-  IF to_regprocedure('realtime.send(jsonb,text,text,boolean)') IS NULL THEN
-    RETURN NULL;
-  END IF;
-  FOR v_target IN
-    SELECT slot.primary_connection_id AS connection_id
-    FROM public.control_runtime_sessions s
-    JOIN public.control_device_slots slot ON slot.session_id = s.id
-    WHERE s.game_id = NEW.game_id AND s.device_protocol = 2
-      AND s.ended_at IS NULL AND s.expires_at > clock_timestamp()
-      AND slot.game_id = NEW.game_id
-      AND slot.primary_connection_id IS NOT NULL
-      AND slot.lease_expires_at > clock_timestamp()
-  LOOP
-    BEGIN
-      PERFORM realtime.send(
-        jsonb_build_object('row', to_jsonb(NEW)),
-        'state',
-        format('game-state:%s:%s', NEW.game_id, v_target.connection_id),
-        true
-      );
-    EXCEPTION WHEN OTHERS THEN
-      RAISE WARNING 'game_state broadcast failed: %', SQLSTATE;
-    END;
-  END LOOP;
-  RETURN NULL;
-EXCEPTION WHEN OTHERS THEN
-  RAISE WARNING 'game_state broadcast skipped: %', SQLSTATE;
+  PERFORM public._control_broadcast(NEW.game_id, 'state', jsonb_build_object('row', to_jsonb(NEW)));
   RETURN NULL;
 END;
 $$;
@@ -7056,6 +7082,33 @@ $$;
 
 
 --
+-- Name: control_display_signal_topic_valid("text", "jsonb"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_display_signal_topic_valid"("p_topic" "text", "p_claims" "jsonb") RETURNS boolean
+    LANGUAGE "plpgsql" STABLE
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE v_game uuid;
+BEGIN
+  IF p_topic IS NULL OR p_claims IS NULL OR p_claims ->> 'device_type' IS DISTINCT FROM 'display' THEN RETURN false; END IF;
+  v_game := (p_claims ->> 'game_id')::uuid;
+  IF p_topic <> format('game-signal:%s', v_game) THEN RETURN false; END IF;
+  RETURN public.control_device_realtime_claim_valid(v_game, p_claims);
+EXCEPTION WHEN invalid_text_representation OR numeric_value_out_of_range THEN
+  RETURN false;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION "control_display_signal_topic_valid"("p_topic" "text", "p_claims" "jsonb"); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."control_display_signal_topic_valid"("p_topic" "text", "p_claims" "jsonb") IS 'Realtime Authorization for game-signal:<game_id>: the Display JWT with the live primary lease of that game.';
+
+
+--
 -- Name: control_game_cancel_for_settings("uuid"); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -7151,6 +7204,34 @@ BEGIN
     'started_at',v_game_session.started_at);
 END;
 $$;
+
+
+--
+-- Name: control_owner_topic_valid("text"); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION "public"."control_owner_topic_valid"("p_topic" "text") RETURNS boolean
+    LANGUAGE "plpgsql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_temp'
+    AS $$
+DECLARE v_game uuid; v_uid uuid := auth.uid();
+BEGIN
+  IF p_topic IS NULL OR v_uid IS NULL THEN RETURN false; END IF;
+  IF p_topic LIKE 'game-control:%' THEN v_game := substr(p_topic, 14)::uuid;
+  ELSIF p_topic LIKE 'game-signal:%' THEN v_game := substr(p_topic, 13)::uuid;
+  ELSE RETURN false; END IF;
+  RETURN EXISTS (SELECT 1 FROM public.games g WHERE g.id = v_game AND g.owner_id = v_uid);
+EXCEPTION WHEN invalid_text_representation THEN
+  RETURN false;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION "control_owner_topic_valid"("p_topic" "text"); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION "public"."control_owner_topic_valid"("p_topic" "text") IS 'Realtime Authorization for game-control:<game_id> and game-signal:<game_id>: only the game owner (Control).';
 
 
 --
@@ -23502,6 +23583,13 @@ CREATE TRIGGER "copy_pending_user_market_library" BEFORE INSERT OR DELETE OR UPD
 
 
 --
+-- Name: game_state_display_completion display_completion_broadcast; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "display_completion_broadcast" AFTER INSERT OR UPDATE ON "public"."game_state_display_completion" FOR EACH ROW EXECUTE FUNCTION "public"."_display_completion_broadcast"();
+
+
+--
 -- Name: poll_subscriptions friend_source_closed; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -26725,5 +26813,5 @@ ALTER TABLE "public"."user_market_library" ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AD1RfeQVK7C8lW6uqQE3nEBI6R2eTkkdPuIhcYOSc5T1mf4ZVYtU8zEusLkigyW
+\unrestrict fgjFuZVnGA9raJAxJAPBV5MIo3vJuaLy6j9Cj9SJhDDAzyEhp6Waacijg4S1P5K
 
