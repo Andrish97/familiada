@@ -104,6 +104,9 @@ def focus_text(content, limit=12000, after=14):
     return '\n\n'.join(out)
 
 
+IDLE_LIMIT = 25  # pustych prób przypominania z rzędu, po których zlecenie się wstrzymuje
+
+
 def compact(value):
     return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
 
@@ -315,22 +318,24 @@ class QuestionBank:
 
     async def recall(self, job, seen):
         """Krótka prośba do DeepSeeka o znane pytania ankietowe — bez źródeł stron w prompcie."""
-        recent = await self.db.select('producer_question_pool', {'lang': 'eq.' + job['lang'], 'select': 'text', 'order': 'created_at.desc', 'limit': 40}) or []
-        avoid = list(dict.fromkeys([r['text'] for r in recent] + seen[-60:]))
-        result = await self.ask('List up to 6 survey questions in ' + LANGUAGES[job['lang']] + ' that were really used in the TV show '
+        # Powtórzenia odsiewa drop_known (bez AI); lista do pominięcia tylko kieruje
+        # DeepSeeka — krótka, bo to największa stała część kosztu prośby.
+        recent = await self.db.select('producer_question_pool', {'lang': 'eq.' + job['lang'], 'select': 'text', 'order': 'created_at.desc', 'limit': 15}) or []
+        avoid = list(dict.fromkeys([r['text'] for r in recent] + seen[-25:]))
+        result = await self.ask('List up to 10 survey questions in ' + LANGUAGES[job['lang']] + ' that were really used in the TV show '
             + {'pl': '"Familiada"', 'en': '"Family Feud"', 'uk': '"Сто к одному" or Ukrainian "Family Feud"'}[job['lang']]
             + ' or published as its survey questions (fan sites, quizzes, transcripts). Category (empty means varied): ' + compact(job['category']) + '. '
             'Give the exact wording as it is commonly published, so it can be found with an exact-phrase web search. '
             'Each question: 3–6 short distinct answers (max 17 characters) with the points you remember, ordered from most popular. '
             'Question max 100 characters. No trivia with one correct answer. Natural sentence case, never ALL-CAPS. '
             'Do not repeat or paraphrase any of these: ' + compact(avoid) + '. '
-            'Return {"questions":[{"text":"...","category_hint":"approximate subject","answers":[{"text":"...","fixed_points":35}]}]}.', 1800)
+            'Return {"questions":[{"text":"...","category_hint":"approximate subject","answers":[{"text":"...","fixed_points":35}]}]}.', 2600)
         raw = result.get('questions', [])
         if not isinstance(raw, list):
             raise ProviderUnavailable('Zły format propozycji pytań.')
         seen_norm = set(seen) | {norm(t) for t in avoid}
         out = []
-        for item in raw[:6]:
+        for item in raw[:10]:
             q = validate_question(item, job['lang'], 'generated')
             if q and norm(q['text']) not in seen_norm:
                 seen_norm.add(norm(q['text']))
@@ -442,6 +447,7 @@ class QuestionBank:
                 # prawdziwej stronie (dokładna fraza w SearXNG, bez AI). Strona, która
                 # potwierdziła pytanie, trafia do kolejki pełnego odczytu przez AI.
                 memory = [item for item in state['queries'] if isinstance(item, dict) and ('url' in item or 'seen' in item)]
+                idle = next((item['idle'] for item in state['queries'] if isinstance(item, dict) and isinstance(item.get('idle'), int)), 0)
                 pages = [item for item in memory if 'url' in item]
                 if pages:
                     page = pages[0]
@@ -468,10 +474,17 @@ class QuestionBank:
                     memory.extend({'url': url} for url in found_pages if url not in known)
                     state['message'] = (f'Sprawdzono {len(proposals)} propozycji DeepSeeka, ze źródłem: {len(candidates)}.'
                                         if proposals else 'DeepSeek nie zaproponował nowych pytań; spróbuję ponownie.')
-                    if not candidates:
-                        state['delay'] = 20
+                    # Puste próby z rzędu: coraz rzadziej, po IDLE_LIMIT wstrzymanie — DeepSeek
+                    # nie zna już nowych pytań, dalsze prośby tylko zużywają budżet.
+                    idle = 0 if candidates or found_pages else idle + 1
+                    if idle >= IDLE_LIMIT:
+                        state.update(status='paused', delay=60, message=f'{IDLE_LIMIT} prób z rzędu bez nowego pytania ze źródłem — wstrzymane, żeby nie zużywać budżetu AI. Zmień kategorię albo wybierz tryb generowania; „Wznów” spróbuje ponownie.')
+                        idle = 0
+                        await self.note(job['lang'], state['message'], 'warning', job['id'])
+                    elif not candidates:
+                        state['delay'] = min(900, 20 * 2 ** min(idle, 6))
                 pages_left = [item for item in memory if 'url' in item][:30]
-                state['queries'] = [item for item in memory if 'seen' in item][-200:] + pages_left
+                state['queries'] = [item for item in memory if 'seen' in item][-200:] + pages_left + [{'idle': idle}]
                 state['cursor'] = 0
             accepted = await self.review(candidates, job['category'], job['lang'])
             state['rejected'] += len(candidates) - len(accepted)

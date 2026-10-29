@@ -423,3 +423,26 @@ class FocusAndEvidenceTest(unittest.TestCase):
         self.assertTrue(q['source']['evidence'].startswith('Co zabierasz na plażę? Ręcznik 40'))
         bad = {**raw, 'answers': [{'text': 'Ręcznik', 'fixed_points': 45}, *raw['answers'][1:]]}
         self.assertIsNone(validate_question(bad, 'pl', 'search', {'url': 'https://example.org/x', 'content': content, 'hash': 'h'}))
+
+
+class IdleRecallTest(unittest.IsolatedAsyncioTestCase):
+    async def run_round(self, idle):
+        db = AsyncMock()
+        db.select.return_value = []
+        db.rpc = AsyncMock(return_value={'ok': True})
+        bank = QuestionBank(db, AsyncMock(), 'http://searxng', 'test-only')
+        bank.ask = AsyncMock(return_value={'questions': []})
+        bank.review = AsyncMock(return_value=[])
+        job = {'id': 'job', 'lease': 'lease', 'lang': 'pl', 'kind': 'search', 'enrich': False, 'category': '',
+               'target': 50, 'accepted': 0, 'cursor': 0, 'queries': [{'idle': idle}], 'round': 0}
+        await bank.process(job)
+        return [c for c in db.rpc.call_args_list if c.args[0] == 'qf_job_checkpoint'][-1].args[1]['p_state']
+
+    async def test_empty_rounds_slow_down_then_pause(self):
+        from lf.question_bank import IDLE_LIMIT
+        state = await self.run_round(2)
+        self.assertEqual(state['delay'], 160)
+        self.assertIn({'idle': 3}, state['queries'])
+        state = await self.run_round(IDLE_LIMIT - 1)
+        self.assertEqual(state['status'], 'paused')
+        self.assertIn({'idle': 0}, state['queries'])
