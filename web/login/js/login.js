@@ -552,7 +552,8 @@ const nextFriend = params.get("f");
 const nextTab = params.get("tab");
 // Ukryta gra w węża: powrót tylko z ważnym linkiem z kodu QR (inaczej /snake/ = 404).
 const nextSnakeQr = params.get("qr");
-const NEXT_TARGETS = ["tasks", "friends", "bases"];
+// account: centrum maili („Masz konto w Familijnej”) prowadzi do Ustawień konta (powiadomienia).
+const NEXT_TARGETS = ["tasks", "friends", "bases", "account"];
 if (isScreenshotId(nextSnakeQr)) NEXT_TARGETS.push("snake");
 const hasNextTarget = NEXT_TARGETS.includes(nextTarget);
 const guestUsername = params.get("guest_username") === "1";
@@ -581,7 +582,7 @@ function buildNextUrl() {
     snake.searchParams.set("lang", getUiLang());
     return snake.toString();
   }
-  const url = new URL(nextTarget === "friends" ? "/friends/" : nextTarget === "bases" ? "/bases/" : "/tasks/", location.origin);
+  const url = new URL(nextTarget === "friends" ? "/friends/" : nextTarget === "bases" ? "/bases/" : nextTarget === "account" ? PAGES.account.path : "/tasks/", location.origin);
   if (nextTarget === "friends" && nextFriend) url.searchParams.set("f", nextFriend);
   if (nextTarget === "tasks" && nextTask) url.searchParams.set("t", nextTask);
   if (nextTarget === "bases" && nextBase) url.searchParams.set("b", nextBase);

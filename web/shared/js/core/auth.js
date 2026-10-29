@@ -26,7 +26,8 @@ export function niceAuthError(e) {
       e?.error_description ||
       e?.description ||
       (typeof e === "string" ? e : "") ||
-      String(e || "")).trim();
+      // Obiekt bez komunikatu: ogólny tekst zamiast „[object Object]”.
+      (e && typeof e === "object" ? "" : String(e || ""))).trim();
 
   if (!msg) return t("auth.loginFailed");
 
