@@ -399,3 +399,27 @@ class AsyncTest(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class FocusAndEvidenceTest(unittest.TestCase):
+    def test_focus_text_keeps_question_blocks_and_drops_noise(self):
+        from lf.question_bank import focus_text
+        noise = '\n'.join('Menu pozycja ' + str(i) for i in range(400))
+        page = noise + '\nCo zabierasz na plażę?\nRęcznik 40\nParasol 30\nWodę 22\n' + noise + \
+            '\nWymień coś, co robisz rano\nKawa 41\nPrysznic 30\nŚniadanie 20\n'
+        text = focus_text(page)
+        self.assertIn('Co zabierasz na plażę?\nRęcznik 40', text)
+        self.assertIn('Wymień coś, co robisz rano\nKawa 41', text)
+        self.assertLess(len(text), len(page) / 5)
+        self.assertEqual(focus_text('bez pytań ' * 10), ('bez pytań ' * 10)[:12000])
+
+    def test_evidence_found_by_code_when_ai_omits_it(self):
+        from lf.question_bank import validate_question
+        content = 'Wstęp\nCo zabierasz na plażę?\nRęcznik 40\nParasol 30\nWodę 22\nStopka'
+        raw = {'text': 'Co zabierasz na plażę?', 'answers': [
+            {'text': 'Ręcznik', 'fixed_points': 40}, {'text': 'Parasol', 'fixed_points': 30}, {'text': 'Wodę', 'fixed_points': 22}]}
+        q = validate_question(raw, 'pl', 'search', {'url': 'https://example.org/x', 'content': content, 'hash': 'h'})
+        self.assertIsNotNone(q)
+        self.assertTrue(q['source']['evidence'].startswith('Co zabierasz na plażę? Ręcznik 40'))
+        bad = {**raw, 'answers': [{'text': 'Ręcznik', 'fixed_points': 45}, *raw['answers'][1:]]}
+        self.assertIsNone(validate_question(bad, 'pl', 'search', {'url': 'https://example.org/x', 'content': content, 'hash': 'h'}))

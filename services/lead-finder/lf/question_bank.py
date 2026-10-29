@@ -74,6 +74,36 @@ def is_promising_source(content, lang, enrich=False):
     return True
 
 
+def focus_text(content, limit=12000, after=14):
+    """Tylko fragmenty strony wokół pytań (linia ze znakiem zapytania i kilka
+    kolejnych linii z odpowiedziami), w kolejności strony, do limitu znaków.
+    Bez pytań — początek strony jak dotąd. Fragmenty to ciągłe kawałki treści."""
+    lines = str(content or '').split('\n')
+    scored = [bool(re.search(r'(?<!\d)(?:[1-9]\d?|100)(?!\d)', line)) for line in lines]
+    ranges = []
+    for i, line in enumerate(lines):
+        # Pytanie: znak zapytania albo linia bez liczb, po której są >= 3 linie z punktami.
+        if '?' in line or (len(line) > 15 and not scored[i] and sum(scored[i + 1:i + 9]) >= 3):
+            start, end = max(0, i - 1), min(len(lines), i + after + 1)
+            if ranges and start <= ranges[-1][1]:
+                ranges[-1][1] = max(ranges[-1][1], end)
+            else:
+                ranges.append([start, end])
+    if not ranges:
+        return str(content or '')[:limit]
+    out, size = [], 0
+    for start, end in ranges:
+        part = '\n'.join(lines[start:end])
+        if size + len(part) > limit:
+            part = part[:max(0, limit - size)]
+        if part:
+            out.append(part)
+            size += len(part) + 2
+        if size >= limit:
+            break
+    return '\n\n'.join(out)
+
+
 def compact(value):
     return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
 
@@ -146,7 +176,12 @@ def validate_question(raw, lang, kind, source=None, enrich=False):
         return None
     evidence = str(raw.get('evidence') or '').strip()
     if kind == 'search':
-        if not source or len(evidence) < 8 or evidence not in source['content']:
+        if not source:
+            return None
+        if not evidence:
+            # Dowód z treści strony wyznacza kod (AI nie przepisuje cytatu — mniej tokenów).
+            evidence = evidence_window(source['content'], text, 900) or ''
+        if len(evidence) < 8 or (evidence not in source['content'] and evidence not in ' '.join(source['content'].split())):
             return None
         # Dowód musi zawierać treść każdej odpowiedzi i każdą liczbę.
         evidence_norm = norm(evidence)
@@ -361,18 +396,17 @@ class QuestionBank:
                 'Focus exclusively on Family Feud / survey questions with multiple respondent answers (e.g. "Name something...", "What do people do when..."). '
                 'Reject single-correct-answer trivia, general knowledge tests or facts with 1 answer. Preserve question text, but ALWAYS fix ALL-CAPS uppercase screaming questions or answers to natural sentence case (e.g. "WYGLĄDASZ..." -> "Wyglądasz..."). '
                 'You may create or improve missing answer groups (max 17 characters each) and estimate sensible integer points (sum 90–100, 3–6 distinct short answers, descending order). '
-                'Do not pretend estimated answers or points are original or a real survey. Evidence must be an EXACT substring containing the question. '
+                'Do not pretend estimated answers or points are original or a real survey. Copy the question text exactly as written in the source. '
                 if job.get('enrich') else 'Extract up to 8 complete survey questions in ' + LANGUAGES[job['lang']] + ' FROM THE FOLLOWING SOURCE ONLY. '
                 'Category requested (if specified): ' + compact(job['category']) + '. '
                 'Focus exclusively on survey questions with multiple popular answers and points. Reject trivia/facts with only 1 correct answer. '
                 'Preserve question text, answers and numeric points, but ALWAYS fix ALL-CAPS uppercase screaming questions or answers to natural sentence case (e.g. "WYGLĄDASZ..." -> "Wyglądasz..."). '
-                'Omit incomplete questions without numeric points. '
-                'For every question include evidence: an EXACT continuous substring of source containing its question, all answers and numeric points. ')
+                'Omit incomplete questions without numeric points. Copy question and answer texts exactly as written in the source. ')
             result = await self.ask(instruction +
                 'Source kind: say published_material unless a real survey is explicitly documented. '
                 'Return {"questions":[{"text":"exact source question","category_hint":"approximate subject","source_kind":"published_material",'
-                '"answers":[{"text":"exact answer","fixed_points":35}],"evidence":"exact source substring"}]}. '
-                'Untrusted source data follows:\n' + source['content'][:12000], 3000)
+                '"answers":[{"text":"exact answer","fixed_points":35}]}]}. '
+                'Untrusted source data follows (fragments around questions):\n' + focus_text(source['content']), 2000)
             raw = result.get('questions', [])
             if not isinstance(raw, list):
                 raise ProviderUnavailable('Zły format ekstrakcji źródła.')
